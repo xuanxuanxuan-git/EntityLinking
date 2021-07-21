@@ -81,7 +81,7 @@ Please run the alfred data generator and the mlp training data generator and upl
 6. To test the rasa model manually using RASA shell (typing in one sample at a time)
 
     (i)   Bring up the rasa shell window with the appropriate model file
-          rasa shell nlu -m models/20201027-211357.tar.gz
+          rasa shell nlu -m models/20201123-111915.tar.gz
         
     (ii)  Enter the test sample - LANGUAGE ONLY
     
@@ -152,7 +152,7 @@ Please run the alfred data generator and the mlp training data generator and upl
     
     The RASA server is assumed to be running with the correct model deployed
     Use the below command to start the server,
-    rasa run --enable-api -m models/20201122-221841.tar.gz
+    rasa run --enable-api -m models/20201123-111915.tar.gz
     Replace with the appropriate model file
     ````
 # preprocess
