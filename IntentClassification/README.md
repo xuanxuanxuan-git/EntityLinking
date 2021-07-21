@@ -9,14 +9,14 @@ Please run the alfred data generator and the mlp training data generator and upl
 
     ```
     $ sudo apt update
-    $ sudo apt install python3-dev python3-pip
-    $ python3 -m venv ./venv
+    $ sudo apt install python3-dev python3-pip    (make sure you install python version 3.7 or 3.6)
+    $ python3.7 -m venv ./venv
     $ source ./venv/bin/activate
     $ pip install -U pip
     $ pip install rasa==1.10.12
      OR
     $ pip3 install rasa==1.10.12
-    $ pip3 install rasa[full]==1.10.12
+    $ pip3 install rasa[full]==1.10.12            (run this to make sure you install all dependencies)
 
     Dependencies for Spacy
 
