@@ -10,7 +10,7 @@ Please run the alfred data generator and the mlp training data generator and upl
     ```
     $ sudo apt update
     $ sudo apt install python3-dev python3-pip    (make sure you install python version 3.7 or 3.6)
-    $ python3.7 -m venv ./venv
+    $ python3.7 -m venv ./venv                    (make sure you do this inside the IntentClassification folder)
     $ source ./venv/bin/activate
     $ pip install -U pip
     $ pip install rasa==1.10.12
@@ -37,11 +37,14 @@ Please run the alfred data generator and the mlp training data generator and upl
     We used the full dataset for the project (109 GB)
     https://ai2-vision-alfred.s3-us-west-2.amazonaws.com/full_2.1.0.7z
     ```
-    
+        
 2. Run the alfred data generator<br/>
    ```
    Remember to activate the virtual environment in the Intent Classification folder
    $ source venv/bin/activate
+   
+   Before you run this, open the apputil.py inside the Util folder and change the line where you assign the path to the Train folder e.g. for me it's  
+   FOLDER_PATH = "/Users/Adi/Documents/json_feat/full_2.1.0/train". Then you can run the following - 
    
    ./IntentClassifier/IntentClassification/preprocess/alfred_training_data_generator.py
    ```
