@@ -1,0 +1,10 @@
+results/*
+.idea/*
+.idea/
+.idea/*.xml
+venv/*
+data-input/*
+models/*
+*.pyc
+.git/*
+.__pycache__/*
