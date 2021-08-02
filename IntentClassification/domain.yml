@@ -1,71 +1,31 @@
 intents:
-  - GotoLocation
-  - PickupObject
-  - PutObject
-  - GotoLocation PickupObject
-  - GotoLocation PickupObject GotoLocation
-  - GotoLocation PickupObject GotoLocation PutObject
-  - PickupObject GotoLocation
-  - PickupObject GotoLocation PutObject
-  - GotoLocation PutObject
-  - GotoLocation PickupObject PutObject
-  - PickupObject PutObject
-  - RotateAgent PickupObject
-  - RotateAgent PutObject
-  - RotateAgent PickupObject PutObject
-  - RotateAgent PickupObject GotoLocation PutObject
-  - RotateAgent PickupObject GotoLocation
-
+  - greet
+  - goodbye
+  - affirm
+  - deny
+  - mood_great
+  - mood_unhappy
+  - bot_challenge
 
 responses:
+  utter_greet:
+  - text: "Hey! How are you?"
 
-  utter_0:
-  - text: "GotoLocation"
+  utter_cheer_up:
+  - text: "Here is something to cheer you up:"
+    image: "https://i.imgur.com/nGF1K8f.jpg"
 
-  utter_1:
-  - text: "PickupObject"
+  utter_did_that_help:
+  - text: "Did that help you?"
 
-  utter_2:
-  - text: "PutObject"
+  utter_happy:
+  - text: "Great, carry on!"
 
-  utter_3:
-  - text: "GotoLocation PickupObject"
+  utter_goodbye:
+  - text: "Bye"
 
-  utter_4:
-  - text: "GotoLocation PickupObject GotoLocation"
-
-  utter_5:
-  - text: "GotoLocation PickupObject GotoLocation PutObject"
-
-  utter_6:
-  - text: "PickupObject GotoLocation"
-
-  utter_7:
-  - text: "PickupObject GotoLocation PutObject"
-
-  utter_8:
-  - text: "GotoLocation PutObject"
-
-  utter_9:
-  - text: "GotoLocation PickupObject PutObject"
-
-  utter_10:
-  - text: "PickupObject PutObject"
-
-  utter_11:
-  - text: "RotateAgent PickupObject"
-
-  utter_12:
-  - text: "RotateAgent PutObject"
-
-  utter_13:
-  - text: "RotateAgent PickupObject PutObject"
-
-  utter_14:
-  - text: "RotateAgent PickupObject GotoLocation PutObject"
-
-  utter_15:
-  - text: "RotateAgent PickupObject GotoLocation"
+  utter_iamabot:
+  - text: "I am a bot, powered by Rasa."
 
 session_config:
   session_expiration_time: 60

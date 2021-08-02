@@ -1,43 +1,31 @@
-## GotoLocation
-* GotoLocation
-  - utter_0
+## happy path
+* greet
+  - utter_greet
+* mood_great
+  - utter_happy
 
-## PickupObject
-* PickupObject
-  - utter_1
+## sad path 1
+* greet
+  - utter_greet
+* mood_unhappy
+  - utter_cheer_up
+  - utter_did_that_help
+* affirm
+  - utter_happy
 
-## PutObject
-* PutObject
-  - utter_2
+## sad path 2
+* greet
+  - utter_greet
+* mood_unhappy
+  - utter_cheer_up
+  - utter_did_that_help
+* deny
+  - utter_goodbye
 
-## GotoLocation PickupObject
-* GotoLocation PickupObject
-  - utter_3
+## say goodbye
+* goodbye
+  - utter_goodbye
 
-## GotoLocation PickupObject GotoLocation
-* GotoLocation PickupObject GotoLocation
-  - utter_4
-
-## GotoLocation PickupObject GotoLocation PutObject
-* GotoLocation PickupObject GotoLocation PutObject
-  - utter_5
-
-## PickupObject GotoLocation
-* PickupObject GotoLocation
-  - utter_6
-
-## PickupObject GotoLocation PutObject
-* GotoLocation PickupObject GotoLocation
-  - utter_7
-
-## GotoLocation PutObject
-* GotoLocation PutObject
-  - utter_8
-
-## GotoLocation PickupObject PutObject
-* GotoLocation PickupObject PutObject
-  - utter_9
-
-## PickupObject PutObject
-* PickupObject PutObject
-  - utter_10
+## bot challenge
+* bot_challenge
+  - utter_iamabot

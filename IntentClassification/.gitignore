@@ -6,3 +6,5 @@ venv/*
 data-input/*
 models/*
 *.pyc
+.git/*
+.__pycache__/*

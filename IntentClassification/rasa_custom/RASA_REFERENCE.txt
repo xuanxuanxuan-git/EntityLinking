@@ -4,7 +4,8 @@ rasa shell nlu
 rasa shell nlu -m models/220201122-221841.tar.gz
 rasa run --enable-api -m models/20201122-221841.tar.gz
 # to bring custom modules to python path
-export PYTHONPATH=/home/karun/PycharmProjects/IntentClassification/rasa_custom/:$PYTHONPATH
+export PYTHONPATH=/mnt/c/Users/62572/Desktop/COMP90055/IntentClassifier/IntentClassification/rasa_custom/:$PYTHONPATH
+export PYTHONPATH=/mnt/c/Users/62572/Desktop/COMP90055/IntentClassifier/IntentClassification/:$PYTHONPATH
 dbms.security.procedures.unrestricted=gds.*
 pip3 install rasa[spacy]
 python3 -m spacy download en_core_web_lg
