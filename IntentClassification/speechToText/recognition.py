@@ -21,14 +21,6 @@ from speechToText.speakText import initialise_engine, speak
 PROMPT_LIMIT = 3
 
 
-def there_exist(text_string):
-    triggers = ['hi', 'hey', 'hello']
-    if any(word in text_string for word in triggers):
-        return True
-    else:
-        return False
-
-
 def get_audio(recognizer, microphone, engine, attempt_limit):
     """
     transcribe speech that are recorded from microphone
@@ -90,7 +82,7 @@ def get_audio(recognizer, microphone, engine, attempt_limit):
                 response["error"] = "Unable to understand audio"
                 if i < attempt_limit - 1:
                     print("Attempt left: {}.".format(attempt_limit - i - 1))
-                    speak(engine, "Sorry I can't understand you, Please speak more clearly")
+                    speak(engine, "Sorry I can't understand you")
                 else:
                     print("exiting...")
 
@@ -122,4 +114,4 @@ def recognize_speech_from_mic(attempt_limit=PROMPT_LIMIT):
     return sentence
 
 
-print(recognize_speech_from_mic())
+# print(recognize_speech_from_mic())

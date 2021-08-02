@@ -3,14 +3,14 @@
 1. Add a new folder: speechToText
    * <code>recognition.py</code> 
    * <code>speakText.py</code>
-   * <code>background_listening</code> (incomplete)
+   * <code>background_listening</code>
 2. Add an extra function <code>speech_to_rasa</code> in <code>rasa_single_instance_tester.py</code>
 
 ### Details
 - recognition.py will listen to the voice command, transcribe the audio data to the text.
 - speakText.py will read out text input
    * to run the text-to-speech, install pyttsx3 through: pip3 install pyttsx3
-- background_listening.py allows continuous background listening, and detecting keywords (for activation).
+- background_listening.py allows continuous background listening, and detecting keywords (listen for activation).
 - <code>speech_to_rasa</code> in rasa_single_instance_tester.py will activate the speech-to-text recognition 
   and feed the transcribed command to rasa for intent classification.
 ---
