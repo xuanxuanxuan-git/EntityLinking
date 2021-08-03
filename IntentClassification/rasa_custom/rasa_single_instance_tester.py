@@ -14,12 +14,10 @@
 
 import requests
 import json
+import os
 import sys
-sys.path.append('/mnt/c/Users/62572/Desktop/COMP90055/IntentClassifier/IntentClassification/')
-sys.path.append('C:/Users/62572/Desktop/COMP90055/IntentClassifier/IntentClassification/')
-
-# for path in sys.path:
-#     print(path)
+rootpath=os.path.abspath('..')   # Represents the absolute path of the parent folder (IntentClassification)
+sys.path.append(rootpath)
 
 from util.apputil import RASA_SERVER
 from speechToText.recognition import get_audio, recognize_speech_from_mic, PROMPT_LIMIT
@@ -70,4 +68,4 @@ post_to_rasa('hang a right at the wooden dresser and walk to the brown chair ahe
 # post_to_rasa('go up to the table in front of you pick up the credit card to the left of the cardboard box on the table turn to your left and walk into the living room then turn to the first arm chair on your right @@@@@@ 0.79 2.0 2.67 0.978')
 
 # activate the speech-to-text recognition and classify the intent using rasa
-speech_to_rasa()
+# speech_to_rasa()

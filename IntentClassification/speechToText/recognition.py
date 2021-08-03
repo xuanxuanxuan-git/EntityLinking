@@ -11,10 +11,11 @@
 # In order to use it, a package must be installed through:
 #   pip3 install pyttsx3
 
+import os
 import sys
-sys.path.append('C:/Users/62572/Desktop/COMP90055/IntentClassifier/IntentClassification/')
-
 import speech_recognition as sr
+rootpath=os.path.abspath('..')   # Represents the absolute path of the parent folder (IntentClassification)
+sys.path.append(rootpath)
 from speechToText.speakText import initialise_engine, speak
 
 # number of attempts allowed
@@ -82,7 +83,7 @@ def get_audio(recognizer, microphone, engine, attempt_limit):
                 response["error"] = "Unable to understand audio"
                 if i < attempt_limit - 1:
                     print("Attempt left: {}.".format(attempt_limit - i - 1))
-                    speak(engine, "Sorry I can't understand you")
+                    speak(engine, "Sorry I don't understand")
                 else:
                     print("exiting...")
 
@@ -114,4 +115,4 @@ def recognize_speech_from_mic(attempt_limit=PROMPT_LIMIT):
     return sentence
 
 
-# print(recognize_speech_from_mic())
+print(recognize_speech_from_mic())

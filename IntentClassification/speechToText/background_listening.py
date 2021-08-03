@@ -10,8 +10,10 @@
 
 import speech_recognition as sr
 import time
+import os
 import sys
-sys.path.append('C:/Users/62572/Desktop/COMP90055/IntentClassifier/IntentClassification/')
+rootpath=os.path.abspath('..')   # Represents the absolute path of the parent folder (IntentClassification)
+sys.path.append(rootpath)
 from rasa_custom.rasa_single_instance_tester import post_to_rasa
 
 
@@ -25,10 +27,10 @@ def there_exist(text_string):
 
 def callback(recognizer, audio):
     try:
-        print("listening")
+        print("listening...")
         text = recognizer.recognize_google(audio)
         print(text)
-        if there_exist(text):
+        if there_exist(text.lower()):
             print("wake word detected")
             print("How can I help you?")
             while True:
@@ -48,16 +50,19 @@ def callback(recognizer, audio):
 def get_speech():
     command = None
     r = sr.Recognizer()
-    with sr.Microphone() as source:
-        audio = r.listen(source, timeout=5)
-
     try:
-        command = r.recognize_google(audio)
-        # print("Google Speech Recognition thinks you said " + command)
-    except (sr.UnknownValueError, sr.WaitTimeoutError):
+        with sr.Microphone() as source:
+            audio = r.listen(source, timeout=5)
+
+        try:
+            command = r.recognize_google(audio)
+            # print("Google Speech Recognition thinks you said " + command)
+        except sr.UnknownValueError:
+            print("I don't understand")
+        except sr.RequestError as e:
+            print("API unavailable; {0}".format(e))
+    except sr.WaitTimeoutError:
         print("I don't understand")
-    except sr.RequestError as e:
-        print("API unavailable; {0}".format(e))
     return command
 
 
