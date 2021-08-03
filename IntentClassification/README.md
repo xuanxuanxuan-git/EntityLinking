@@ -3,16 +3,26 @@
 1. Add a new folder: speechToText
    * <code>recognition.py</code> 
    * <code>speakText.py</code>
-   * <code>background_listening</code>
+   * <code>background_listening.py</code>
 2. Add an extra function <code>speech_to_rasa</code> in <code>rasa_single_instance_tester.py</code>
 
 ### Details
 - recognition.py will listen to the voice command, transcribe the audio data to the text.
-- speakText.py will read out text input
+- speakText.py will read out text input (text-to-speech)
    * to run the text-to-speech, install pyttsx3 through: pip3 install pyttsx3
-- background_listening.py allows continuous background listening, and detecting keywords (listen for activation).
-- <code>speech_to_rasa</code> in rasa_single_instance_tester.py will activate the speech-to-text recognition 
+- background_listening.py allows continuous background listening, and detecting keywords. The main speech-to-text 
+  recognition will be activated when wake words such as "hi", "hello" are heard. Then the program will listen for the 
+  voice command, transcribe it and invoke <code>post_to_rasa</code> to do intent classification. 
+- <code>speech_to_rasa</code> in rasa_single_instance_tester.py can activate the speech-to-text recognition 
   and feed the transcribed command to rasa for intent classification.
+  
+### Issues with <i>always listening / background listening</i>
+1. Efficieny: It transcribes all the audio to text and detects wake word. It is inefficient and can be slow in recognizing 
+keywords.
+2. Accuracy: Sometimes it cannot recognise audio (wake words) accurately. For example, when I said 'reachy', it recognised 
+   as 'richie', or 'credit card' as 'karate card'.
+3. Internet connection: using Google API needs constant internet connection. (CMU Sphinx can work offline)
+   
 ---
 ## MultiLayer Perceptron - Baseline
 
