@@ -2,14 +2,16 @@
 
 1. Add a new folder: speechToText
    * <code>recognition.py</code> 
-   * <code>speakText.py</code>
+   * <code>textToSpeech.py</code>
    * <code>background_listening.py</code>
 2. Add an extra function <code>speech_to_rasa</code> in <code>rasa_single_instance_tester.py</code>
 
 ### Details
 - recognition.py will listen to the voice command, transcribe the audio data to the text.
-- speakText.py will read out text input (text-to-speech)
+- textToSpeech.py will read out text input
    * to run the text-to-speech, install pyttsx3 through: pip3 install pyttsx3
+   * to test the voice of the engine, uncomment the last two lines in textToSpeech.py
+   * the voice used is <b>system specific</b>. The code will first detect the os and set the voice available in that os.
 - background_listening.py allows continuous background listening, and detecting keywords. The main speech-to-text 
   recognition will be activated when wake words such as "hi", "hello" are heard. Then the program will listen for the 
   voice command, transcribe it and invoke <code>post_to_rasa</code> to do intent classification. 
