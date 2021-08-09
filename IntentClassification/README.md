@@ -1,4 +1,4 @@
-## ChangeLog (02 August 2021)
+## ChangeLog (09 August 2021)
 
 1. Add a new folder: speechToText
    * <code>recognition.py</code> 
