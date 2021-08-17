@@ -1,0 +1,4 @@
+[auth]
+apikey = replace-with-the-IBM-key
+# Modify region based on where you provisioned your stt instance
+region = us-south
