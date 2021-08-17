@@ -6,17 +6,19 @@
 # The recognizer will attempt multiple times if it cannot understand
 #   the voice command.
 
-# PRE-REQUISTIES
+# PRE-REQUISITES
 # The program calls a text-to-speech engine which reads out text input.
 # In order to use it, a package must be installed through:
 #   pip3 install pyttsx3
 
 import os
 import sys
+import configparser
 import speech_recognition as sr
 rootpath=os.path.abspath('..')   # Represents the absolute path of the parent folder (IntentClassification)
 sys.path.append(rootpath)
-from speechToText.speakText import initialise_engine, speak
+# from textblob import TextBlob
+from speechToText.textToSpeech import initialise_engine, speak
 
 # number of attempts allowed
 PROMPT_LIMIT = 3
@@ -49,9 +51,9 @@ def get_audio(recognizer, microphone, engine, attempt_limit):
 
     with microphone as source:
         print("A few seconds of silence,please wait...")
-        recognizer.adjust_for_ambient_noise(source, duration=5)
+        recognizer.adjust_for_ambient_noise(source, duration=3)
         # print("Listening...")
-        speak(engine, "Hi, how can I help you?")
+        # speak(engine, "Hi, how can I help you?")
 
         # greeting = recognizer.listen(source, timeout=5)
         # activation = recognizer.recognize_google(greeting)
@@ -61,14 +63,18 @@ def get_audio(recognizer, microphone, engine, attempt_limit):
         #     speak(engine, "Hi, how can I help you")
         #     print("Hi, how can I help you?")
 
-        # while True:
-        for i in range(attempt_limit):
+        # recognize speech using IBM Speech to Text
+        IBM_USERNAME = "apikey"
+        IBM_PASSWORD = get_auth()
+
+        while True:
+        # for i in range(attempt_limit):
             print("listening...")
-            audio = recognizer.listen(source, timeout=5)
+            audio = recognizer.listen(source, timeout=4)
+            print("transcribing...")
 
             try:
-                text = recognizer.recognize_google(audio)
-                print("Google Speech Recognition thinks you said: " + text)
+                text = recognizer.recognize_ibm(audio, username=IBM_USERNAME, password=IBM_PASSWORD)
                 response["transcription"] = text
                 break
 
@@ -81,13 +87,20 @@ def get_audio(recognizer, microphone, engine, attempt_limit):
             # if the audio can not be understood, retry for a limited number of attempts
             except sr.UnknownValueError as e:
                 response["error"] = "Unable to understand audio"
-                if i < attempt_limit - 1:
-                    print("Attempt left: {}.".format(attempt_limit - i - 1))
-                    speak(engine, "Sorry I don't understand")
-                else:
-                    print("exiting...")
+                # if i < attempt_limit - 1:
+                #     print("Attempt left: {}.".format(attempt_limit - i - 1))
+                #     speak(engine, "Sorry I don't understand")
+                # else:
+                #     print("exiting...")
 
     return response
+
+
+def get_auth():
+    config = configparser.RawConfigParser()
+    config.read('speech.cfg')
+    apikey = config.get('auth', 'apikey')
+    return apikey
 
 
 def recognize_speech_from_mic(attempt_limit=PROMPT_LIMIT):
@@ -115,4 +128,9 @@ def recognize_speech_from_mic(attempt_limit=PROMPT_LIMIT):
     return sentence
 
 
-print(recognize_speech_from_mic())
+if __name__ == "__main__":
+    message = recognize_speech_from_mic()
+    print(message)
+
+    # blob = TextBlob(message).correct()
+    # print(blob)
