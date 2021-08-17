@@ -1,33 +1,15 @@
-## ChangeLog (16 August 2021)
+# EntityLinker
 
-1. Restructure the folder
-2. Add a new folder: EntityLinker
-    * parsing.py
-3. Update the speech_recognition.py
+The multi-modal entity linker will identify textual entities in a sentence,
+and link textual entities with visual entities. Visual entities are detected
+by the existing [visual pipeline](https://github.com/stereolabs/zed-yolo). 
 
-### Details (Incomplete)
+# speechToText
+
+We use the [IBM Watson](https://cloud.ibm.com/catalog/services/speech-to-text) 
+speech recognition service to perform verbal command recognition.
 
 
-## ChangeLog (09 August 2021)
-
-1. Add a new folder: speechToText
-   * <code>recognition.py</code> 
-   * <code>textToSpeech.py</code>
-   * <code>background_listening.py</code>
-2. Add an extra function <code>speech_to_rasa</code> in <code>rasa_single_instance_tester.py</code>
-
-### Details
-- recognition.py will listen to the voice command, transcribe the audio data to the text.
-- textToSpeech.py will read out text input
-   * to run the text-to-speech, install pyttsx3 through: pip3 install pyttsx3
-   * to test the voice of the engine, uncomment the last two lines in textToSpeech.py
-   * the voice used is <b>system specific</b>. The code will first detect the os and set the voice available in that os.
-- background_listening.py allows continuous background listening, and detecting keywords. The main speech-to-text 
-  recognition will be activated when wake words such as "hi", "hello" are heard. Then the program will listen for the 
-  voice command, transcribe it and invoke <code>post_to_rasa</code> to do intent classification. 
-- <code>speech_to_rasa</code> in rasa_single_instance_tester.py can activate the speech-to-text recognition 
-  and feed the transcribed command to rasa for intent classification.
-  
   
 # IntentClassifier
 
