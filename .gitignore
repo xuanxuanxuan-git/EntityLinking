@@ -8,3 +8,4 @@ models/*
 *.pyc
 .git/*
 .__pycache__/*
+speechToText/speech.cfg
