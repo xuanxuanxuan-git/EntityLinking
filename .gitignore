@@ -9,3 +9,4 @@ models/*
 .git/*
 .__pycache__/*
 speechToText/speech.cfg
+EntityLinker/Data/ALFRED
