@@ -11,4 +11,4 @@ models/*
 speechToText/speech.cfg
 EntityLinker/Data/ALFRED/*
 EntityLinker/Spacy_model/*
-../.ipynb_checkpoints/*
+EntityLinker/.ipynb_checkpoints/*
