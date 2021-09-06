@@ -9,4 +9,6 @@ models/*
 .git/*
 .__pycache__/*
 speechToText/speech.cfg
-EntityLinker/Data/ALFRED
+EntityLinker/Data/ALFRED/*
+EntityLinker/Spacy_model/*
+../.ipynb_checkpoints/*
