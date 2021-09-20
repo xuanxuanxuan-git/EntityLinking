@@ -8,12 +8,20 @@ To use the model, please follow the steps below.
 
 ```angular2html
 
+    python version = 3.7
+
     $ pip install -U pip setuptools wheel
     $ pip install -U spacy
     $ python -m spacy download en_core_web_trf (optional, this model is used for generating dataset)
     $ python -m spacy download en_core_web_lg
 
     $ pip install pandas
+
+    To check if pyTorch is installed:
+    $ pip3 show torch
+
+    If pytorch is not installed:
+    $ pip install torch 
 ```
 
 ## Dataset for training the classifier
@@ -87,5 +95,7 @@ The datasets used for training the LSTM classifier can be
         OUTPUT:
         target: ['book']
         receptacle: []
+    
+    To exit the inference: press Ctrl+C, then press enter
 
 ```
