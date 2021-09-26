@@ -121,7 +121,6 @@ def get_textual_entities(text, nlp):
 # "book" has been mentioned twice. To reduce matching efforts when annotating
 # entities, only the first occurrence of the repetitive mentions of entity will be kept.
 def check_repetitive_mention(pending_entity, entity_list, nlp):
-
     coref = False
     for entity in entity_list:
         entity_temp = nlp.vocab[entity.root.text.lower()]
@@ -145,9 +144,14 @@ def check_direction_related_noun(entity):
     return related
 
 
+# nlp = spacy.load("en_core_web_lg", disable=["ner"])
+# sentence = nlp("move the table to the chair")
+# get_textual_entities(sentence, nlp)
+
+
 # Read the target/receptacle label, and the entity list of the text sentence
 # Link the label with the textual mentions of entities
-def link_label_with_textual_entity(label, entity_list, nlp):
+def link_label_with_textual_entity(label, entity_list, nlp, null_recep=False):
     max_sim = 0
     max_entity = None
 
@@ -162,7 +166,15 @@ def link_label_with_textual_entity(label, entity_list, nlp):
             max_sim = sim
             max_entity = entity
     # print("the most similar entity is: ", label.text, max_entity.text)
-    return max_entity
+
+    if null_recep:
+        if max_sim > 0.8:
+            return max_entity
+        else:
+            return None
+
+    if not null_recep:
+        return max_entity
 
 
 # --------Test individual entity linking result -----------
@@ -331,6 +343,7 @@ def generate_annotated_dataset(input_file, output_file, nlp_trf, nlp_vector):
             if len(entity_list) == 0:
                 print(task_command, new_entry["high_idx"])
             target_recep = determine_number_of_entities(json_object)
+
             if target_recep[0] == 1:
                 max_target = link_label_with_textual_entity(target, entity_list, nlp_vector)
                 target_entry = create_entity_dictionary(max_target, target_string)
@@ -341,6 +354,13 @@ def generate_annotated_dataset(input_file, output_file, nlp_trf, nlp_vector):
                 recep_entry = create_entity_dictionary(max_recep, recep_string)
                 recep_entry["role"] = "receptacle"
                 new_entry["entities"].append(recep_entry)
+            elif target_recep[1] == 0:
+                max_recep = link_label_with_textual_entity(receptacle, entity_list, nlp_vector, null_recep=True)
+                if max_recep:
+                    recep_entry = create_entity_dictionary(max_recep, recep_string)
+                    recep_entry["role"] = "receptacle"
+                    new_entry["entities"].append(recep_entry)
+
             # print(new_entry)
             output_f.write(json.dumps(new_entry))
             output_f.write("\n")
@@ -373,11 +393,10 @@ def produce_statistics(input_file):
 
 
 if __name__ == '__main__':
-
     nlp = spacy.load("en_core_web_lg", disable=["ner"])
     nlp_trf = spacy.load("en_core_web_trf", disable=["ner"])
 
-    # generate_annotated_dataset(NEW_TRAIN_DATA_PATH, ANNOTATED_TRAIN_DATA_PATH, nlp_trf, nlp)
+    generate_annotated_dataset(NEW_TRAIN_DATA_PATH, ANNOTATED_TRAIN_DATA_PATH, nlp_trf, nlp)
     # generate_annotated_dataset(NEW_TEST_DATA_PATH, ANNOTATED_TEST_DATA_PATH, nlp_trf, nlp)
     # generate_annotated_dataset(NEW_DEV_DATA_PATH, ANNOTATED_DEV_DATA_PATH, nlp_trf, nlp)
 

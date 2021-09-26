@@ -115,14 +115,14 @@ def build_labels_file(input_file, sentences_file, output_file):
     output.close()
 
 
-nlp_trf = spacy.load("en_core_web_trf", disable=["ner"])
+# nlp_trf = spacy.load("en_core_web_trf", disable=["ner"])
 # build_sentences_and_dep_file(ANNOTATED_TRAIN_DATA_PATH, TRAIN_SENTENCES_FILE_PATH, TRAIN_DEP_FILE_PATH, nlp_trf)
 # build_sentences_and_dep_file(ANNOTATED_DEV_DATA_PATH, DEV_SENTENCES_FILE_PATH, DEV_DEP_FILE_PATH, nlp_trf)
 # build_sentences_and_dep_file(ANNOTATED_TEST_DATA_PATH, TEST_SENTENCES_FILE_PATH, TEST_DEP_FILE_PATH, nlp_trf)
 
 #
-# build_labels_file(ANNOTATED_TRAIN_DATA_PATH, TRAIN_SENTENCES_FILE_PATH, TRAIN_LABELS_FILE_PATH)
-# build_labels_file(ANNOTATED_DEV_DATA_PATH, DEV_SENTENCES_FILE_PATH, DEV_LABELS_FILE_PATH)
-# build_labels_file(ANNOTATED_TEST_DATA_PATH, TEST_SENTENCES_FILE_PATH, TEST_LABELS_FILE_PATH)
+build_labels_file(ANNOTATED_TRAIN_DATA_PATH, TRAIN_SENTENCES_FILE_PATH, TRAIN_LABELS_FILE_PATH)
+build_labels_file(ANNOTATED_DEV_DATA_PATH, DEV_SENTENCES_FILE_PATH, DEV_LABELS_FILE_PATH)
+build_labels_file(ANNOTATED_TEST_DATA_PATH, TEST_SENTENCES_FILE_PATH, TEST_LABELS_FILE_PATH)
 
 print("completed")
