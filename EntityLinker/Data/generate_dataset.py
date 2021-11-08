@@ -15,20 +15,12 @@ import re
 import sys
 import subprocess
 
+PARENT_FOLDER_PATH = 'C:/Users/62572/Desktop/COMP90055/IntentClassifier/EntityLinker'
+sys.path.append(PARENT_FOLDER_PATH)
+from linkerUtil import ANNOTATED_TRAIN_DATA_PATH, ANNOTATED_DEV_DATA_PATH, ANNOTATED_TEST_DATA_PATH, TRAIN_DATA_PATH, \
+    DEV_DATA_PATH, TEST_DATA_PATH, NEW_TRAIN_DATA_PATH, NEW_DEV_DATA_PATH, NEW_TEST_DATA_PATH
+
 FOLDER_PATH = "C:/Users/62572/Desktop/COMP90055/IntentClassifier/EntityLinker/Data/ALFRED/json_feat_2.1.0/"
-TRAIN_DATA_PATH = 'Original_dataset/training_set.txt'
-DEV_DATA_PATH = 'Original_dataset/dev_set.txt'
-TEST_DATA_PATH = 'Original_dataset/testing_set.txt'
-
-NEW_TRAIN_DATA_PATH = 'Generated_dataset/training_set_new.txt'
-NEW_DEV_DATA_PATH = 'Generated_dataset/dev_set_new.txt'
-NEW_TEST_DATA_PATH = 'Generated_dataset/testing_set_new.txt'
-
-ANNOTATED_TRAIN_DATA_PATH = 'Generated_dataset/training_set_annotated.txt'
-ANNOTATED_DEV_DATA_PATH = 'Generated_dataset/dev_set_annotated.txt'
-ANNOTATED_TEST_DATA_PATH = 'Generated_dataset/testing_set_annotated.txt'
-
-FASTTEXT_WORD_VECTORS_MODEL = '../Model/ft_vectors_lg'
 
 
 # Remove "task_desc"s whose "high_idx" is -2, -3, or -4.
@@ -54,27 +46,6 @@ def remove_duplicated_task_desc(input_file, output_file):
 # remove_duplicated_task_desc(TRAIN_DATA_PATH, NEW_TRAIN_DATA_PATH)
 # remove_duplicated_task_desc(DEV_DATA_PATH, NEW_DEV_DATA_PATH)
 # remove_duplicated_task_desc(TEST_DATA_PATH, NEW_TEST_DATA_PATH)
-
-
-# To create the fasttext vector model in the first time,
-# First download the fastText word vectors at
-# https://dl.fbaipublicfiles.com/fasttext/vectors-english/crawl-300d-2M-subword.zip
-# then run the following code
-def load_fasttext_vectors(model_name, word_vectors):
-    subprocess.run([sys.executable,
-                    "-m",
-                    "spacy",
-                    "init",
-                    "vectors",
-                    "en",
-                    word_vectors,
-                    model_name
-                    ])
-
-
-# model_name = "../Spacy_model/ft_vectors_lg"
-# word_vectors = "../Spacy_model/crawl-300d-2M-subword/crawl-300d-2M-subword.vec"
-# load_fasttext_vectors(model_name, word_vectors)
 
 
 # --------------------------------------------------------------------------
@@ -108,8 +79,9 @@ def get_textual_entities(text, nlp):
                 break
         # if the noun_chunk is not PRON (it, this, that)
         if entity:
-            if not check_repetitive_mention(entity, text.spans["all"], nlp) \
-                    and not check_direction_related_noun(entity):
+            # if not check_repetitive_mention(entity, text.spans["all"], nlp) \
+            #         and not check_direction_related_noun(entity):
+            if not check_direction_related_noun(entity):
                 text.spans["all"].append(entity)
                 # print(entity.text)
 
@@ -392,13 +364,43 @@ def produce_statistics(input_file):
     print("Multi desc:    ", multi_count, "\n")
 
 
-if __name__ == '__main__':
-    nlp = spacy.load("en_core_web_lg", disable=["ner"])
-    nlp_trf = spacy.load("en_core_web_trf", disable=["ner"])
+# store all targets and recep labels in a file
+def get_target_and_recep_list():
+    targets = set()
+    receps = set()
 
-    generate_annotated_dataset(NEW_TRAIN_DATA_PATH, ANNOTATED_TRAIN_DATA_PATH, nlp_trf, nlp)
+    for file in [ANNOTATED_TRAIN_DATA_PATH, ANNOTATED_DEV_DATA_PATH, ANNOTATED_TEST_DATA_PATH]:
+        with open(file, "r") as input_f:
+            for line in input_f:
+                json_object = json.loads(line)
+                for entity in json_object['entities']:
+                    if entity['role'] == 'target':
+                        targets.add(entity['label'])
+                    elif entity['role'] == 'receptacle':
+                        receps.add(entity['label'])
+
+    TARGETS_LIST = 'Generated_dataset/targets.names'
+    RECEPS_LIST = 'Generated_dataset/receptacles.names'
+
+    target_output = open(TARGETS_LIST, 'w')
+    recep_output = open(RECEPS_LIST, 'w')
+
+    target_output.writelines(map(lambda x: x + '\n', targets))
+    recep_output.writelines(map(lambda x: x + '\n', receps))
+
+    print(targets)
+    print(receps)
+
+
+if __name__ == '__main__':
+    # nlp = spacy.load("en_core_web_lg", disable=["ner"])
+    # nlp_trf = spacy.load("en_core_web_trf", disable=["ner"])
+
+    # generate_annotated_dataset(NEW_TRAIN_DATA_PATH, ANNOTATED_TRAIN_DATA_PATH, nlp_trf, nlp)
     # generate_annotated_dataset(NEW_TEST_DATA_PATH, ANNOTATED_TEST_DATA_PATH, nlp_trf, nlp)
     # generate_annotated_dataset(NEW_DEV_DATA_PATH, ANNOTATED_DEV_DATA_PATH, nlp_trf, nlp)
+
+    # get_target_and_recep_list()
 
     print("Completed")
 

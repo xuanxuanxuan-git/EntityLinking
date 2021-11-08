@@ -1,13 +1,18 @@
 # EntityLinker
 
-The multi-modal entity linker will identify textual entities in a sentence,
-and link textual entities with visual entities. Visual entities are detected
-by the existing [visual pipeline](https://github.com/stereolabs/zed-yolo). 
+The multi-modal entity linker is capable of recognising the target and receptacle entities 
+within a command. It can also perform the visual and textual entity linking, which link textual
+mentions of entities with visual mentions of entities. Visual entities are detected
+by the existing [visual pipeline](https://github.com/stereolabs/zed-yolo). With the visual
+and textual co-reference links, the entity linker can get the visual information of the target
+and the receptacle, and pass the information to multi-modal intent classifier for intent 
+classification.
 
 # speechToText
 
 We use the [IBM Watson](https://cloud.ibm.com/catalog/services/speech-to-text) 
-speech recognition service to perform verbal command recognition.
+speech recognition service to transcribe the verbal commands to textual commands, so that they 
+can be used for entity recognition.
 
 
   

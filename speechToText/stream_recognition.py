@@ -36,13 +36,14 @@ CHANNELS = 1
 # standard default. If you have an audio device that requires
 # something different, change this.
 RATE = 44100
-RECORD_SECONDS = 15
+RECORD_SECONDS = 5
 FINALS = []
 LAST = None
+LAST_ACTIVE_TIME = 0
 
 REGION_MAP = {
     'us-east': 'gateway-wdc.watsonplatform.net',
-    'us-south': 'stream.watsonplatform.net',
+    'us-south': 'stream.cloud.ibm.com',
     'eu-gb': 'stream.watsonplatform.net',
     'eu-de': 'stream-fra.watsonplatform.net',
     'au-syd': 'gateway-syd.watsonplatform.net',
@@ -73,7 +74,7 @@ def read_audio(ws, timeout):
                     input=True,
                     frames_per_buffer=CHUNK)
 
-    print("* recording")
+    print("* Please speak")
     rec = timeout or RECORD_SECONDS
 
     for i in range(0, int(RATE / CHUNK * rec)):
@@ -83,6 +84,10 @@ def read_audio(ws, timeout):
         # need to indicate that otherwise the stream service
         # interprets this as text control messages.
         ws.send(data, ABNF.OPCODE_BINARY)
+        ft = time.time()
+        if (ft - LAST_ACTIVE_TIME) > 5:
+            # print("stop")
+            break
 
     # Disconnect the audio stream
     stream.stop_stream()
@@ -113,6 +118,7 @@ def on_message(self, msg):
     """
     global LAST
     data = json.loads(msg)
+
     if "results" in data:
         if data["results"][0]["final"]:
             FINALS.append(data)
@@ -121,6 +127,9 @@ def on_message(self, msg):
             LAST = data
         # This prints out the current fragment that we are working on
         print(data['results'][0]['alternatives'][0]['transcript'])
+
+        global LAST_ACTIVE_TIME
+        LAST_ACTIVE_TIME = time.time()
 
 
 def on_error(self, error):
@@ -141,7 +150,7 @@ def on_close(ws):
 
 
 def on_open(ws):
-    """Triggered as soon a we have an active connection."""
+    """Triggered as soon as we have an active connection."""
     args = ws.args
     data = {
         "action": "start",
@@ -170,30 +179,35 @@ def get_url():
     config = configparser.RawConfigParser()
     config.read('speech.cfg')
 
-    region = config.get('auth', 'region')
-    host = REGION_MAP[region]
+    # region = config.get('auth', 'region')
+    host = REGION_MAP["us-south"]
     return ("wss://{}/speech-to-text/api/v1/recognize"
            "?model=en-AU_BroadbandModel").format(host)
 
 
 def get_auth():
     config = configparser.RawConfigParser()
-    config.read('speech.cfg')
-    apikey = config.get('auth', 'apikey')
-    return ("apikey", apikey)
+    # config.read('C:/Users/62572/Desktop/COMP90055/IntentClassifier/speechToText/speech.cfg')
+    # apikey = config.get('auth', 'apikey')
+    return ("apikey", "your-api-key")
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
         description='Transcribe Watson text in real time')
-    parser.add_argument('-t', '--timeout', type=int, default=15)
+    parser.add_argument('-t', '--timeout', type=int, default=60)
     # parser.add_argument('-d', '--device')
     # parser.add_argument('-v', '--verbose', action='store_true')
     args = parser.parse_args()
     return args
 
 
-def main():
+def remove_hesitation(text_string):
+    text_string = text_string.replace('%HESITATION ', '')
+    return text_string
+
+
+def microphone_stt():
     # Connect to websocket interfaces
     headers = {}
     userpass = ":".join(get_auth())
@@ -207,6 +221,8 @@ def main():
     # console.
     #
     # websocket.enableTrace(True)
+    global LAST_ACTIVE_TIME
+    LAST_ACTIVE_TIME = time.time()
     ws = websocket.WebSocketApp(url,
                                 header=headers,
                                 on_message=on_message,
@@ -218,12 +234,13 @@ def main():
     # call, so it won't return until the ws.close() gets called (after
     # 6 seconds in the dedicated thread).
     ws.run_forever()
-    return on_close(ws)
-    # print("text: ", on_close(ws))
+
+    speech = remove_hesitation(on_close(ws))
+    return speech
 
 
 if __name__ == "__main__":
-    text = main()
+    text = microphone_stt()
     if text:
         print("Text: {}".format(text))
     else:

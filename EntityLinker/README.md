@@ -1,33 +1,33 @@
-## LSTM classifier
-
-The LSTM classifier can be found in the LSTM_model folder. 
-The name of the classifier is called: <code>entity_model.pth</code>.
+## Entity recognition - LSTM model
+The LSTM model is responsible for entity recognition. 
+The trained LSTM model can be found in the LSTM_model folder. 
+The name of the model is called: <code>entity_model.pth</code>.
 To use the model, please follow the steps below.
 
-## Install spaCy and classifier related module
+## Install spaCy and LSTM model related module
 
 ```angular2html
 
     python version = 3.7
 
-    $ pip install -U pip setuptools wheel
-    $ pip install -U spacy
-    $ python -m spacy download en_core_web_trf (optional, this model is used for generating dataset)
-    $ python -m spacy download en_core_web_lg
+    $ pip3 install -U pip setuptools wheel
+    $ pip3 install -U spacy
+    $ python -m spacy download en_core_web_trf (this model is used for dependency parsing)
+    $ python -m spacy download en_core_web_lg (this model is used to generate word vectors)
 
-    $ pip install pandas
+    $ pip3 install pandas
 
     To check if pyTorch is installed:
     $ pip3 show torch
 
     If pytorch is not installed:
-    $ pip install torch 
+    $ pip3 install torch 
 ```
 
-## Dataset for training the classifier
+## Dataset for training the LSTM model
     
-The datasets used for training the LSTM classifier can be 
-    found in the folder <code>Data/Generated_dataset/baseline_dataset</code>.
+The datasets used for training the LSTM model can be 
+    found in the folder <code>Data/Generated_dataset/lstm_dataset</code>.
 
 ```angular2html
     
@@ -37,37 +37,49 @@ The datasets used for training the LSTM classifier can be
     
 ```
 
-## Generate the dataset for model training 
+## Generate the dataset for training the LSTM model
+
+To re-generate the dataset, we need to run the following codes. Before this, we need to
+change the <code>PARENT_FOLDER_PATH</code> variable in the generate_dataset.py to your own path
+to the folder EntityLinker. Then uncomment codes in the main function.
 
 ```angular2html
 
     $ cd Data
-    $ python build_labels.py     (this will generate the labels file)
-    $ python generate_dataset.py (this will generate the sentences file and dependency relation file)
+    $ python build_labels.py     
+    $ python generate_dataset.py
 
 ```
 
-## Train the LSTM classifier
+## Train the LSTM model
 
-```angular2html
-
-    $ cd LSTM_model
     
-    Open the entityLinker.ipynb file. It is recommended to upload the notebook and datasets 
-    generated in the previous step to Google Drive, and run the notebook on Google Colab.
+Open the entityLinker.ipynb file. It is recommended to upload the notebook and datasets 
+generated in the previous step to Google Drive, and run the notebook on Google Colab.
 
-    To train the classifier, run the notebook up the section 'Save and load model'.
-```
+To train the classifier, run the notebook up the section 'Save and load model'. After downloading
+the model, copy the model and place it into the folder titled 'EntityLinker/LSTM_model'.
+    
 
 
-## Run the trained LSTM classifier
+## Run the entity recognition, entity linking, and intent classification
 
+### Run the entity recognition (LSTM model)
+Step 0: change the paths
+1. change SPEECH_RECOGNITION_PATH to your own path to the folder <i>speechToText</i>.
+2. change PARENT_FOLDER_PATH to your own path to the folder <i>EntityLinker</i>.
+3. change INTENT_CLASSIFICATION to your own path to the folder <i>IntentClassification/rasa_custom</i>.
+4. make sure that the trained LSTM model is placed in the folder <i>LSTM_model</i>, and is titled as <i>entity_model.pth</i>.
+
+Step 1: perform the entity recognition
 ```angular2html
     
     $ cd LSTM_model
     $ python entity_recognition.py
+    Enter 1 to type a command.
     
-    To test the classifier, enter the following sentences
+    
+    To test the LSTM model, enter the following sentences
     
         INPUT:
         "move the purple pillow from the couch to the arm chair"
@@ -84,7 +96,7 @@ The datasets used for training the LSTM classifier can be
         receptacle: ['counter']
     
         INPUT:
-        "hang a right at the wooden dresser and walk to the brown"
+        "hang a right at the wooden dresser and walk to the brown chair ahead"
 
         OUTPUT: 
         target: []
@@ -96,6 +108,45 @@ The datasets used for training the LSTM classifier can be
         target: ['book']
         receptacle: []
     
-    To exit the inference: press Ctrl+C, then press enter
+    To exit the inference: enter Ctrl+C, then press enter
 
+```
+
+### Enable the speech recognition service
+
+Step 0.1: install additional packages
+```angular2html
+    $ pip3 install pyaudio
+    $ pip3 install websocket-client==0.56.0
+```
+
+Step 0.2: replace the IBM API key in line 192 of speechToText/stream_recognition.py. 
+The API can be found in the last section of the handover report.
+
+Step 1: issue a verbal command
+```angular2html
+    $ python entity_recognition.py
+    Enter 2, wait for the instruction '* please speak', and then give a verbal command.
+```
+
+### Run the visual and textual entity linking
+
+Step 0.1: turn on the visual pipeline. Change the receiver's ip address to the current device.
+
+Step 0.2: install all the packages needed for the intent classification. And do the following commands.
+
+```angular2html
+    In the IntentClassification/rasa_custom/rasa_single_instance_tester.py, change the 
+    rootpath to your own path to the folder IntentClassification.
+
+    Then start the RASA server in a separate terminal and run the following command:
+    $ rasa run --enable-api -m models/20201123-111915.tar.gz
+```
+
+Step 1: issue a command and perform the intent classification
+```angular2html
+    $ python entity_recognition.py
+    Enter 1 or 2, then enter a command. The terminal will display the recognised target and receptacle 
+    using the LSTM model, the visual mentions of same entities, and the predicted intents
+    from the multi-modal intent classifier.
 ```

@@ -1,17 +1,35 @@
+# Yueqing Xuan
+# 1075355
+
+# This file performs the entity recognition and entity linking.
+# It first loads the trained LSTM model, and then takes a textual command and performs
+# the entity recognition. Then it finds all the visual and textual co-reference links
+# and then get the visual information that is needed by the intent classifier.
+
 import spacy
 import numpy as np
 import torch
+import os
+import sys
+import math
 import pandas as pd
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence, pad_packed_sequence
+from receiver import *
 
-# from entityLinker import collect_dep_relations, create_dep_encoding, get_dep_vector
+SPEECH_RECOGNITION_PATH = 'C:/Users/62572/Desktop/COMP90055/IntentClassifier/speechToText'
+PARENT_FOLDER_PATH = 'C:/Users/62572/Desktop/COMP90055/IntentClassifier/EntityLinker'
+INTENT_CLASSIFICATION = 'C:/Users/62572/Desktop/COMP90055/IntentClassifier/IntentClassification/rasa_custom'
 
-MODEL_PATH = 'entity_model.pth'
-TRAIN_DEP_FILE_PATH = "../Data/Generated_dataset/baseline_dataset/dep_train.txt"
-DEV_DEP_FILE_PATH = "../Data/Generated_dataset/baseline_dataset/dep_dev.txt"
-TEST_DEP_FILE_PATH = "../Data/Generated_dataset/baseline_dataset/dep_test.txt"
+sys.path.append(SPEECH_RECOGNITION_PATH)
+sys.path.append(PARENT_FOLDER_PATH)
+sys.path.append(INTENT_CLASSIFICATION)
+
+from stream_recognition import *
+from linkerUtil import MODEL_PATH, TRAIN_DEP_FILE_PATH, DEV_DEP_FILE_PATH, TEST_DEP_FILE_PATH
+from rasa_single_instance_tester import *
+
 
 # --------------------------- Global parameters ------------------------------- #
 
@@ -78,7 +96,7 @@ dep_df = create_dep_encoding(dep_set)
 
 # ----------------------------------------------------------------------------- #
 
-
+# Initialise a new entity linker model that has the same architecture as the trained LSTM model
 class EntityLinker(nn.Module):
 
     def __init__(self, feature_dim, hidden_dim, roleset_size):
@@ -95,9 +113,7 @@ class EntityLinker(nn.Module):
                                             input_lens, batch_first=True,
                                             enforce_sorted=False)
 
-        # print("input packed shape:", input_packed.batch_sizes)
         lstm_out_packed, _ = self.lstm(input_packed)
-        # print("output packed shape:", lstm_out_packed.batch_sizes)
 
         # lstm_out_padded shape: batch size x batch_max_len x lstm_hidden_dim
         lstm_out_padded, output_lengths = pad_packed_sequence(lstm_out_packed,
@@ -109,6 +125,7 @@ class EntityLinker(nn.Module):
         return label_out
 
 
+# map the index of the label to label in the label set
 def idx_to_label(preds, role_to_idx):
     preds_string = []
     for result in preds:
@@ -117,8 +134,13 @@ def idx_to_label(preds, role_to_idx):
     return preds_string
 
 
+# process the textual command by:
+# tokenize the sentence, then get the word embedding features and dependency relation features
+# for each token in the sentence
 def process_sentence(nlp, sentence_string):
     sentence_nlp = nlp(sentence_string.lower())
+    nlp_trf = spacy.load("en_core_web_trf", disable=["ner"])
+    sentence_nlp_trf = nlp_trf(sentence_string.lower())
 
     num_token = len(sentence_nlp)
     tensor_shape = (num_token, feature_dimension)
@@ -126,7 +148,7 @@ def process_sentence(nlp, sentence_string):
 
     i = 0
     for token in sentence_nlp:
-        dep = get_dep_vector(dep_df, token.dep_)
+        dep = get_dep_vector(dep_df, sentence_nlp_trf[i].dep_)
         vector = token.vector
         feature = np.append(vector, dep)
         feature_tensor = torch.from_numpy(feature).float()
@@ -136,6 +158,7 @@ def process_sentence(nlp, sentence_string):
     return tokens_features_t
 
 
+# get the sequence labeling predictions of the textual command
 def predict(model, nlp, sentence_string, role_to_idx):
     model.eval()
     features_t = process_sentence(nlp, sentence_string)
@@ -158,6 +181,9 @@ def predict(model, nlp, sentence_string, role_to_idx):
     return pred_roles
 
 
+# based on the sequence labeling predictions, combine the entity labels of the
+# same entity into one entity.
+# for example, combine credit(B-TARGET) and card(I-TARGET) into credit card (target)
 def get_target_and_recep(sentence_nlp, pred_roles):
     target = []
     receptacle = []
@@ -180,6 +206,8 @@ def get_target_and_recep(sentence_nlp, pred_roles):
     return target, receptacle
 
 
+# perform the entity recognition
+# take the textual command and return the target entity and receptacle entity
 def command_to_entities(sentence):
     sentence_nlp = nlp(sentence.lower())
 
@@ -187,30 +215,132 @@ def command_to_entities(sentence):
     target, receptacle = get_target_and_recep(sentence_nlp, result)
 
     print("\nThe command you entered is: ", sentence)
-    print("Predictions of each word:  ", result)
     print("target:     {} \nreceptacle: {}\n".format(target, receptacle))
 
+    return target, receptacle
+
+
+# Match the textual entity with the most similar visual mention of entity from the visual pipeline.
+# Similarity is measured by calculating the cosine similarity between word vectors.
+# The threshold is 0.5, meaning that if the similarity is greater than 0.5, then there is
+# a visual and textual co-reference link.
+def find_most_similar_visual_item(nlp, entity_list, textual_entity_name):
+    textual_entity = nlp(textual_entity_name)
+    max_sim = 0.5
+    max_coco = None
+
+    for item in entity_list:
+        if item == "diningtable":
+            item = "dining table"
+        elif item == "pottedplant":
+            item = "potted plant"
+
+        visual_entity = nlp(item)
+
+        if visual_entity[0].has_vector:
+            sim = textual_entity.similarity(visual_entity)
+            if sim > max_sim:
+                max_sim = sim
+                max_coco = item
+        else:
+            print("{} not found from the visual pipeline".format(item))
+
+    return max_coco
+
+
+# ------------------------------ for Intent classification -----------------------#
+
+
+def get_dot_product(x, y):
+    return round(np.dot(x, y) / (np.sqrt(np.dot(x, x)) * np.sqrt(np.dot(y, y))), 4)
+
+
+def get_agent_facing_direction_vector(agent_face_direction):
+    z = round(math.cos(math.radians(agent_face_direction)), 2)
+    x = round(math.sin(math.radians(agent_face_direction)), 2)
+    return [x, z]
+
+
+# gets the angle between the object and the direction the agent is facing
+def get_dot_product_score(agent_pos, object_pos, agent_face_direction):
+    f = get_agent_facing_direction_vector(agent_face_direction)
+    o_a = np.subtract([object_pos[0], object_pos[2]], [agent_pos[0], agent_pos[2]])
+    if o_a[0] == 0 and o_a[1] == 0:
+        return 1
+    else:
+        return get_dot_product(f, o_a)
+
+
+# Calculate the distance between the target entity and the receptacle entity
+def calculate_distance(target, recep):
+    (x1, y1, z1) = target["position"]
+    (x2, y2, z2) = recep["position"]
+
+    distance_1 = round(math.sqrt(x1 ** 2 + y1 ** 2 + z1 ** 2), 2)
+    distance_2 = round(math.sqrt(x2 ** 2 + y2 ** 2 + z2 ** 2), 2)
+    distance_3 = round(math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2 + (z2 - z1) ** 2), 2)
+
+    angle = get_dot_product_score([0, 0, 0], [x1, y1, z1], 0)
+
+    return str(distance_1) + ' ' + str(distance_2) + ' ' + str(distance_3) + ' ' + str(angle)
+
+
+# -------------------------- entity recognition and linking ------------------- #
 
 if __name__ == '__main__':
-    # load the saved model
+    # load the saved model and the spacy's language model
     model_load = EntityLinker(feature_dim=feature_dimension,
                               hidden_dim=hidden_dimension,
                               roleset_size=roleset_size)
     model_load.load_state_dict(torch.load(MODEL_PATH, map_location=torch.device('cpu')))
 
     nlp = spacy.load("en_core_web_lg", disable=["ner"])
-
-    # ------------- enter a sentence from the console -------------------- #
+    mode = input("Enter 1 to type a command, enter 2 to speak. ")
 
     while True:
         try:
-            sentence = input("Enter a command: ")
-            command_to_entities(sentence)
+            if mode == '1':
+                sentence = input("Enter a command: ")
+                target, receptacle = command_to_entities(sentence)
+
+            elif mode == '2':
+                audio_input = microphone_stt()
+                sentence = audio_input
+                if not audio_input:
+                    sys.exit(0)
+                print("Audio input: ", audio_input)
+
+                target, receptacle = command_to_entities(sentence)
+
+            try:
+                # ------------- match with visual pipeline ------------------------ #
+
+                # get visual info from the visual pipeline
+                visual_info = receive_from_zed()
+                if not visual_info:
+                    raise RuntimeError
+
+                visual_entity_list = [item["name"] for item in visual_info]
+                print("Entities detected by the visual pipeline: ", visual_entity_list)
+
+                if target:
+                    visual_target_name = find_most_similar_visual_item(nlp, visual_entity_list, target[0])
+                    for item in visual_info:
+                        if item["name"].replace(' ', '') == visual_target_name.replace(' ',''):
+                            visual_target_entity = item
+                if receptacle:
+                    visual_recep_name = find_most_similar_visual_item(nlp, visual_entity_list, receptacle[0])
+                    for item in visual_info:
+                        if item["name"].replace(' ', '') == visual_recep_name.replace(' ',''):
+                            visual_recep_entity = item
+
+                # ------------- pass the visual info to intent classifier ----------#
+                message = sentence + ' @@@@@@ ' + calculate_distance(visual_target_entity, visual_recep_entity)
+                post_to_rasa(message)
+
+            except:
+                print("visual pipeline is off")
+
         except KeyboardInterrupt:
             print("\nQuit!")
-            break
-
-    # -------------- or manually type a sentence ------------------------ #
-
-    # sentence = "move the pillow to the chair and turn to the couch"
-    # command_to_entities(sentence)
+            sys.exit()

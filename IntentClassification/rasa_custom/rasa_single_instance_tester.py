@@ -1,6 +1,5 @@
 # Author : Karun Mathew
 # Student Id: 1007247
-# Modified by : Yueqing Xuan (1075355)
 
 # This program posts a single command to the RASA server for intent classification
 
@@ -16,12 +15,11 @@ import requests
 import json
 import os
 import sys
-rootpath=os.path.abspath('..')   # Represents the absolute path of the parent folder (IntentClassification)
+# Represents the absolute path of the parent folder (IntentClassification)
+rootpath = 'C:/Users/62572/Desktop/COMP90055/IntentClassifier/IntentClassification'
 sys.path.append(rootpath)
 
 from util.apputil import RASA_SERVER
-from speechToText.recognition import get_audio, recognize_speech_from_mic, PROMPT_LIMIT
-# from speechToText.speak import initialise_engine, speak
 
 headers = {
     'Content-type': 'application/json'
@@ -49,23 +47,11 @@ def post_to_rasa(command):
     return intent, confidence, intent_ranking
 
 
-def speech_to_rasa():
-    sentence = recognize_speech_from_mic()
-    if sentence:
-        print("classifying intent...")
-        post_to_rasa(sentence)
-    else:
-        print("Exit")
-
-
 # Sample test instances
 
 # With only language data
-post_to_rasa('hang a right at the wooden dresser and walk to the brown chair ahead')
+# post_to_rasa('hang a right at the wooden dresser and walk to the brown chair ahead')
 
 # With both language and visual data
 # post_to_rasa('pick up the credit card on the table @@@@@@ 0.21 3.76 6.87 0.87')
 # post_to_rasa('go up to the table in front of you pick up the credit card to the left of the cardboard box on the table turn to your left and walk into the living room then turn to the first arm chair on your right @@@@@@ 0.79 2.0 2.67 0.978')
-
-# activate the speech-to-text recognition and classify the intent using rasa
-# speech_to_rasa()

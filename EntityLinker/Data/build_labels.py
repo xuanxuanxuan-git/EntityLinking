@@ -19,24 +19,32 @@ In labels.txt file
 B-TARGET represents the beginning of a TARGET entity,
 if the entity has more than one token, subsequent tags are represented as I-TARGET
 """
+
 import json
 import spacy
 import linecache
-from generate_dataset import ANNOTATED_TRAIN_DATA_PATH, ANNOTATED_DEV_DATA_PATH, ANNOTATED_TEST_DATA_PATH
+
+PARENT_FOLDER_PATH = 'C:/Users/62572/Desktop/COMP90055/IntentClassifier/EntityLinker'
+sys.path.append(PARENT_FOLDER_PATH)
+from linkerUtil import ANNOTATED_TRAIN_DATA_PATH, ANNOTATED_DEV_DATA_PATH, ANNOTATED_TEST_DATA_PATH
 
 
-TRAIN_SENTENCES_FILE_PATH = "Generated_dataset/baseline_dataset/sentences_train.txt"
-DEV_SENTENCES_FILE_PATH = "Generated_dataset/baseline_dataset/sentences_dev.txt"
-TEST_SENTENCES_FILE_PATH = "Generated_dataset/baseline_dataset/sentences_test.txt"
+TRAIN_SENTENCES_FILE_PATH = "Generated_dataset/lstm_dataset/sentences_train.txt"
+DEV_SENTENCES_FILE_PATH = "Generated_dataset/lstm_dataset/sentences_dev.txt"
+TEST_SENTENCES_FILE_PATH = "Generated_dataset/lstm_dataset/sentences_test.txt"
 
-TRAIN_LABELS_FILE_PATH = "Generated_dataset/baseline_dataset/labels_train.txt"
-DEV_LABELS_FILE_PATH = "Generated_dataset/baseline_dataset/labels_dev.txt"
-TEST_LABELS_FILE_PATH = "Generated_dataset/baseline_dataset/labels_test.txt"
+TRAIN_DEP_FILE_PATH = "Generated_dataset/lstm_dataset/dep_train.txt"
+DEV_DEP_FILE_PATH = "Generated_dataset/lstm_dataset/dep_dev.txt"
+TEST_DEP_FILE_PATH = "Generated_dataset/lstm_dataset/dep_test.txt"
 
-TRAIN_DEP_FILE_PATH = "Generated_dataset/baseline_dataset/dep_train.txt"
-DEV_DEP_FILE_PATH = "Generated_dataset/baseline_dataset/dep_dev.txt"
-TEST_DEP_FILE_PATH = "Generated_dataset/baseline_dataset/dep_test.txt"
+TRAIN_LABELS_FILE_PATH = "Generated_dataset/lstm_dataset/labels_train.txt"
+DEV_LABELS_FILE_PATH = "Generated_dataset/lstm_dataset/labels_dev.txt"
+TEST_LABELS_FILE_PATH = "Generated_dataset/lstm_dataset/labels_test.txt"
 
+EXTRA_TRAIN_DATA = 'Generated_dataset/extra_training_set.txt'
+EXTRA_SENTENCES_FILE_PATH = "Generated_dataset/lstm_dataset/sentences_extra.txt"
+EXTRA_DEP_FILE_PATH = "Generated_dataset/lstm_dataset/dep_extra.txt"
+EXTRA_LABELS_FILE_PATH = "Generated_dataset/lstm_dataset/labels_extra.txt"
 
 OUTSIDE = 'O'
 B_TARGET = 'B-TARGET'
@@ -48,10 +56,9 @@ TARGET = 'target'
 RECEPTACLE = 'receptacle'
 
 
-# Create the sentences.txt file
-# Each line contains tokens of a sentence. Tokens are seperated by a space
+# Create the sentences.txt and dep.txt file
+# Each line contains tokens/dependency relation of a sentence. Tokens/dep relations are seperated by a whitespace
 def build_sentences_and_dep_file(input_file, output_token_file, output_dep_file, nlp_trf):
-
     output_token = open(output_token_file, "w")
     output_dep = open(output_dep_file, "w")
 
@@ -101,14 +108,45 @@ def build_labels_file(input_file, sentences_file, output_file):
                     if entity["role"] == TARGET:
                         labels[entity["start_token"]] = B_TARGET
                         if length > 1:
-                            labels[(entity["start_token"]+1): entity["end_token"]] = [I_TARGET]*(length-1)
+                            labels[(entity["start_token"] + 1): entity["end_token"]] = [I_TARGET] * (length - 1)
                     elif entity["role"] == RECEPTACLE:
                         labels[entity["start_token"]] = B_RECEPTACLE
                         if length > 1:
-                            labels[(entity["start_token"]+1): entity["end_token"]] = [I_RECEPTACLE]*(length-1)
+                            labels[(entity["start_token"] + 1): entity["end_token"]] = [I_RECEPTACLE] * (length - 1)
 
-            labels_string = ' '. join(labels)
+            labels_string = ' '.join(labels)
 
+            output.write(labels_string)
+            output.write("\n")
+
+    output.close()
+
+
+# Find repetitive mentions of entities in a sentence and change their tags from O to
+# the corresponding tags
+def correct_labels(sentences_file, labels_file):
+    output = open(labels_file, "r+")
+    index = 1
+
+    with open(sentences_file, "r") as input_f:
+        for line in input_f:
+            token_list = line.rstrip().split()
+            label_list = linecache.getline(labels_file, index).rstrip().split()
+            index += 1
+
+            co_token_idx = 0
+            for label in label_list:
+                if label != OUTSIDE:
+                    co_token = token_list[co_token_idx]
+                    print(co_token)
+                    i = 0
+                    for token in token_list:
+                        if token == co_token:
+                            label_list[i] = label
+                        i += 1
+                co_token_idx += 1
+
+            labels_string = ' '.join(label_list)
             output.write(labels_string)
             output.write("\n")
 
@@ -119,10 +157,16 @@ def build_labels_file(input_file, sentences_file, output_file):
 # build_sentences_and_dep_file(ANNOTATED_TRAIN_DATA_PATH, TRAIN_SENTENCES_FILE_PATH, TRAIN_DEP_FILE_PATH, nlp_trf)
 # build_sentences_and_dep_file(ANNOTATED_DEV_DATA_PATH, DEV_SENTENCES_FILE_PATH, DEV_DEP_FILE_PATH, nlp_trf)
 # build_sentences_and_dep_file(ANNOTATED_TEST_DATA_PATH, TEST_SENTENCES_FILE_PATH, TEST_DEP_FILE_PATH, nlp_trf)
+# build_sentences_and_dep_file(EXTRA_TRAIN_DATA, EXTRA_SENTENCES_FILE_PATH, EXTRA_DEP_FILE_PATH, nlp_trf)
 
-#
-build_labels_file(ANNOTATED_TRAIN_DATA_PATH, TRAIN_SENTENCES_FILE_PATH, TRAIN_LABELS_FILE_PATH)
-build_labels_file(ANNOTATED_DEV_DATA_PATH, DEV_SENTENCES_FILE_PATH, DEV_LABELS_FILE_PATH)
-build_labels_file(ANNOTATED_TEST_DATA_PATH, TEST_SENTENCES_FILE_PATH, TEST_LABELS_FILE_PATH)
+# build_labels_file(ANNOTATED_TRAIN_DATA_PATH, TRAIN_SENTENCES_FILE_PATH, TRAIN_LABELS_FILE_PATH)
+# build_labels_file(ANNOTATED_DEV_DATA_PATH, DEV_SENTENCES_FILE_PATH, DEV_LABELS_FILE_PATH)
+# build_labels_file(ANNOTATED_TEST_DATA_PATH, TEST_SENTENCES_FILE_PATH, TEST_LABELS_FILE_PATH)
+# build_labels_file(EXTRA_TRAIN_DATA, EXTRA_SENTENCES_FILE_PATH, EXTRA_LABELS_FILE_PATH)
+
+# correct_labels(TRAIN_SENTENCES_FILE_PATH, TRAIN_LABELS_FILE_PATH)
+# correct_labels(DEV_SENTENCES_FILE_PATH, DEV_LABELS_FILE_PATH)
+# correct_labels(TEST_SENTENCES_FILE_PATH, TEST_LABELS_FILE_PATH)
+# correct_labels(EXTRA_SENTENCES_FILE_PATH, EXTRA_LABELS_FILE_PATH)
 
 print("completed")
