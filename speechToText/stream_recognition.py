@@ -20,10 +20,11 @@ import configparser
 import json
 import threading
 import time
-
+import os
 import pyaudio
 import websocket
 from websocket._abnf import ABNF
+# import speech
 
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
@@ -40,15 +41,8 @@ RECORD_SECONDS = 5
 FINALS = []
 LAST = None
 LAST_ACTIVE_TIME = 0
-
-REGION_MAP = {
-    'us-east': 'gateway-wdc.watsonplatform.net',
-    'us-south': 'stream.cloud.ibm.com',
-    'eu-gb': 'stream.watsonplatform.net',
-    'eu-de': 'stream-fra.watsonplatform.net',
-    'au-syd': 'gateway-syd.watsonplatform.net',
-    'jp-tok': 'gateway-syd.watsonplatform.net',
-}
+rootpath='../../'
+config_file = os.path.join(rootpath, 'speechToText/speech.cfg')
 
 
 def read_audio(ws, timeout):
@@ -177,19 +171,19 @@ def on_open(ws):
 
 def get_url():
     config = configparser.RawConfigParser()
-    config.read('speech.cfg')
+    config.read(config_file)
 
-    # region = config.get('auth', 'region')
-    host = REGION_MAP["us-south"]
-    return ("wss://{}/speech-to-text/api/v1/recognize"
-           "?model=en-AU_BroadbandModel").format(host)
+    host = "us-south"
+    instance_id = config.get('auth', 'instance_id')
+    return ("wss://api.{}.speech-to-text.watson.cloud.ibm.com/"
+            "instances/{}/v1/recognize".format(host, instance_id))
 
 
 def get_auth():
     config = configparser.RawConfigParser()
-    # config.read('C:/Users/62572/Desktop/COMP90055/IntentClassifier/speechToText/speech.cfg')
-    # apikey = config.get('auth', 'apikey')
-    return ("apikey", "your-api-key")
+    config.read(config_file)
+    apikey = config.get('auth', 'apikey')
+    return ("apikey", apikey)
 
 
 def parse_args():

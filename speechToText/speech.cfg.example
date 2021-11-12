@@ -1,4 +1,5 @@
 [auth]
+# please refer to the last section of the handover report for authentication info
 apikey = replace-with-the-IBM-key
-# Modify region based on where you provisioned your stt instance
-region = us-south
+
+instance_id = replace-with-instance-id
