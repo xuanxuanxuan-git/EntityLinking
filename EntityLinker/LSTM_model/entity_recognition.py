@@ -84,8 +84,9 @@ def get_dep_vector(dep_df, dep_string):
     try:
         return np.array(dep_df[dep_string].tolist(), dtype=np.float32)
     except KeyError as e:
-        print("Error: Dependency relation not found")
-        return None
+        return np.array(dep_df['FOOT'].tolist(), dtype=np.float32)
+        # print("Error: Dependency relation not found")
+        # return None
 
 
 # collect the dependency relation set, and represent each dep relation using

@@ -24,7 +24,7 @@ import os
 import pyaudio
 import websocket
 from websocket._abnf import ABNF
-# import speech
+
 
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
@@ -216,6 +216,9 @@ def microphone_stt():
     #
     # websocket.enableTrace(True)
     global LAST_ACTIVE_TIME
+    global FINALS
+    if FINALS:
+        FINALS = []
     LAST_ACTIVE_TIME = time.time()
     ws = websocket.WebSocketApp(url,
                                 header=headers,
