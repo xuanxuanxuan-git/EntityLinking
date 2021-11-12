@@ -1,0 +1,4 @@
+pandas
+torch
+pyaudio
+websocket-client==0.56.0
