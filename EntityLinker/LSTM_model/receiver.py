@@ -39,13 +39,12 @@ def receive_from_zed():
 
     laptop_ip = socket.gethostname()
     port = 10000
-
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.bind((laptop_ip, port))
-    s.settimeout(0.00001)
+    s.settimeout(0.5)
 
     try:
-        data, addr = s.recvfrom(4096)
+        data, _ = s.recvfrom(4096)
         detection_data = str(data)
         z = detection_data.split('//')
         detection = z[0]
@@ -53,8 +52,10 @@ def receive_from_zed():
         point_cloud_split = point_cloud.split(",")
 
         entities_detected = split_visual_info(point_cloud_split)
+
     except socket.timeout as e:
-        return None
+        raise RuntimeError
+
     finally:
         s.close()
     return entities_detected

@@ -120,8 +120,9 @@ Step 0.1: install additional packages
     $ pip3 install websocket-client==0.56.0
 ```
 
-Step 0.2: replace the IBM API key in line 192 of speechToText/stream_recognition.py. 
-The API can be found in the last section of the handover report.
+Step 0.2: create a file named <code>speech.cfg</code> in the folder <i>speechToText</i>, copy the information from 
+<i>speech.cfg.example</i> to this file. Replace the <i>apikey</i> and <i>instance_id</i>
+with the authentication details provided in the last section of the handover report.
 
 Step 1: issue a verbal command
 ```angular2html

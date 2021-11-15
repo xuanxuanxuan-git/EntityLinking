@@ -5,7 +5,7 @@
 # It first loads the trained LSTM model, and then takes a textual command and performs
 # the entity recognition. Then it finds all the visual and textual co-reference links
 # and then get the visual information that is needed by the intent classifier.
-
+import socket
 import spacy
 import numpy as np
 import torch
@@ -29,7 +29,6 @@ sys.path.append(INTENT_CLASSIFICATION)
 from stream_recognition import *
 from linkerUtil import MODEL_PATH, TRAIN_DEP_FILE_PATH, DEV_DEP_FILE_PATH, TEST_DEP_FILE_PATH
 from rasa_single_instance_tester import *
-
 
 # --------------------------- Global parameters ------------------------------- #
 
@@ -244,7 +243,7 @@ def find_most_similar_visual_item(nlp, entity_list, textual_entity_name):
                 max_sim = sim
                 max_coco = item
         else:
-            print("{} not found from the visual pipeline".format(item))
+            print("{} not found from the visual pipeline".format(textual_entity_name))
 
     return max_coco
 
@@ -287,6 +286,7 @@ def calculate_distance(target, recep):
 
 
 # -------------------------- entity recognition and linking ------------------- #
+from urllib3.exceptions import NewConnectionError
 
 if __name__ == '__main__':
     # load the saved model and the spacy's language model
@@ -300,6 +300,7 @@ if __name__ == '__main__':
 
     while True:
         try:
+            # ------------- entity recognition ------------------------ #
             if mode == '1':
                 sentence = input("Enter a command: ")
                 target, receptacle = command_to_entities(sentence)
@@ -312,14 +313,16 @@ if __name__ == '__main__':
                 print("Audio input: ", audio_input)
 
                 target, receptacle = command_to_entities(sentence)
+            else:
+                raise KeyError
 
             try:
                 # ------------- match with visual pipeline ------------------------ #
 
                 # get visual info from the visual pipeline
                 visual_info = receive_from_zed()
-                if not visual_info:
-                    raise RuntimeError
+                if not visual_info:  # if no objects detected
+                    raise ValueError
 
                 visual_entity_list = [item["name"] for item in visual_info]
                 print("Entities detected by the visual pipeline: ", visual_entity_list)
@@ -327,21 +330,33 @@ if __name__ == '__main__':
                 if target:
                     visual_target_name = find_most_similar_visual_item(nlp, visual_entity_list, target[0])
                     for item in visual_info:
-                        if item["name"].replace(' ', '') == visual_target_name.replace(' ',''):
+                        if item["name"].replace(' ', '') == visual_target_name.replace(' ', ''):
                             visual_target_entity = item
                 if receptacle:
                     visual_recep_name = find_most_similar_visual_item(nlp, visual_entity_list, receptacle[0])
                     for item in visual_info:
-                        if item["name"].replace(' ', '') == visual_recep_name.replace(' ',''):
+                        if item["name"].replace(' ', '') == visual_recep_name.replace(' ', ''):
                             visual_recep_entity = item
 
                 # ------------- pass the visual info to intent classifier ----------#
                 message = sentence + ' @@@@@@ ' + calculate_distance(visual_target_entity, visual_recep_entity)
-                post_to_rasa(message)
+                print("Input to the intent classifier: ", message)
+                try:
+                    post_to_rasa(message)
+                except Exception:
+                    raise ConnectionError
 
-            except:
+            except RuntimeError:
                 print("visual pipeline is off")
+            except (ValueError, AttributeError):
+                print("Objects not detected by the visual pipeline")
+            except ConnectionError:
+                print("Failed to connect to the intent classifier")
 
+
+        except KeyError:
+            print("Mode not supported")
+            sys.exit()
         except KeyboardInterrupt:
             print("\nQuit!")
             sys.exit()

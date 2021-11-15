@@ -41,6 +41,7 @@ RECORD_SECONDS = 5
 FINALS = []
 LAST = None
 LAST_ACTIVE_TIME = 0
+SILENCE = 3
 rootpath='../../'
 config_file = os.path.join(rootpath, 'speechToText/speech.cfg')
 
@@ -79,7 +80,7 @@ def read_audio(ws, timeout):
         # interprets this as text control messages.
         ws.send(data, ABNF.OPCODE_BINARY)
         ft = time.time()
-        if (ft - LAST_ACTIVE_TIME) > 5:
+        if (ft - LAST_ACTIVE_TIME) > SILENCE:
             # print("stop")
             break
 
