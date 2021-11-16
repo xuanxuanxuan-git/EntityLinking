@@ -66,6 +66,7 @@ Please run the alfred data generator and the mlp training data generator and upl
     $ source venv/bin/activate
     
     Train the rasa model by typing in the following command at the project context root folder
+    $ cd IntentClassification
     $ rasa train
     ```
     
