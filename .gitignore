@@ -13,3 +13,4 @@ EntityLinker/Data/ALFRED/*
 EntityLinker/Spacy_model/*
 EntityLinker/.ipynb_checkpoints/*
 EntityLinker/LSTM_model/.ipynb_checkpoints/*
+IntentClassification/util/__pycache__/*
