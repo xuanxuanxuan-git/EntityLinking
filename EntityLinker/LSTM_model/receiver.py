@@ -6,6 +6,7 @@
 
 import socket
 import sys
+from coordinate_transformation import *
 
 
 # process the visual info received from the visual pipeline
@@ -37,10 +38,10 @@ def split_visual_info(point_cloud):
 # get info from visual pipeline
 def receive_from_zed():
 
-    laptop_ip = socket.gethostname()
+    laptop_name = socket.gethostname()
     port = 10000
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.bind((laptop_ip, port))
+    s.bind((laptop_name, port))
     s.settimeout(0.5)
 
     try:
@@ -63,11 +64,22 @@ def receive_from_zed():
 
 # print the visual information
 if __name__ == '__main__':
+    direction = "opposite"
+    translation_vector = [0.8, -0.1, 0.15]
+    theta = 30
+
     while True:
         try:
             txt = input("Type y to continue.")
             if txt == "y":
-                receive_from_zed()
+                detection = receive_from_zed()
+                print("Detection from visual pipeline: ", detection)
+                transformed_detections = coordinate_transformation(detection, direction, theta, translation_vector)
+                print("Coordinates from reachy's perspective: ", transformed_detections)
+
         except KeyboardInterrupt:
             print("Exit!")
-            sys.exit(0)
+        except RuntimeError:
+            print("visual pipeline is off")
+        finally:
+            sys.exit(1)
