@@ -239,6 +239,13 @@ def reset_coordinate(reachy):
     reachy.turn_off_smoothly('r_arm')
 
 
+# place the arm at a position and get the information of the pose
+def get_current_position(reachy):
+    turn_on_motors(reachy)
+    print_current_pose(reachy)
+    reachy.turn_off_smoothly('r_arm')
+
+
 # Parameters
 ROBOT_IP = '192.168.1.1'  # may need to change this
 HOME_POSITION = [30, 0, 0, -120, 0, -15, 0, 15]  # gripper aligned to chest
@@ -327,4 +334,7 @@ if __name__ == "__main__":
 
     # reset reachy's coordinate
     reset_coordinate(reachy_robot)
+
+    # get current position of reachy
+    get_current_position(reachy_robot)
 
