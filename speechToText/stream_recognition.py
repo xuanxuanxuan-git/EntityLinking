@@ -14,6 +14,11 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+
+# This file contains the IBM watson live speech recognition functions.
+# The connection to the online service will timeout after 30s or after 2 seconds of
+# silence at the end of a speech.
+
 import argparse
 import base64
 import configparser
@@ -22,9 +27,9 @@ import threading
 import time
 import os
 import pyaudio
+import sys
 import websocket
 from websocket._abnf import ABNF
-
 
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
@@ -40,10 +45,11 @@ RATE = 44100
 RECORD_SECONDS = 5
 FINALS = []
 LAST = None
-LAST_ACTIVE_TIME = 0
-SILENCE = 3
-rootpath='../../'
-config_file = os.path.join(rootpath, 'speechToText/speech.cfg')
+# LAST_ACTIVE_TIME = 0
+# SILENCE = 3
+rootpath = '../../'
+# config_file = os.path.join(rootpath, 'speechToText/speech.cfg')
+config_file = 'speech.cfg'
 
 
 def read_audio(ws, timeout):
@@ -55,6 +61,7 @@ def read_audio(ws, timeout):
     """
     global RATE
     p = pyaudio.PyAudio()
+    connected = True
     # NOTE(sdague): if you don't seem to be getting anything off of
     # this you might need to specify:
     #
@@ -75,33 +82,38 @@ def read_audio(ws, timeout):
     for i in range(0, int(RATE / CHUNK * rec)):
         data = stream.read(CHUNK)
         # print("Sending packet... %d" % i)
-        # NOTE(sdague): we're sending raw binary in the stream, we
+        # NOTE: we're sending raw binary in the stream, we
         # need to indicate that otherwise the stream service
         # interprets this as text control messages.
-        ws.send(data, ABNF.OPCODE_BINARY)
-        ft = time.time()
-        if (ft - LAST_ACTIVE_TIME) > SILENCE:
-            # print("stop")
+        try:
+            ws.send(data, ABNF.OPCODE_BINARY)
+        except websocket._exceptions.WebSocketConnectionClosedException:
+            connected = False
             break
+
+        # if (ft - LAST_ACTIVE_TIME) > SILENCE:
+        #     # print("stop")
+        #     break
 
     # Disconnect the audio stream
     stream.stop_stream()
     stream.close()
     print("* done recording")
 
-    # In order to get a final response from STT we send a stop, this
-    # will force a final=True return message.
-    data = {"action": "stop"}
-    ws.send(json.dumps(data).encode('utf8'))
-    # ... which we need to wait for before we shutdown the websocket
-    time.sleep(1)
-    ws.close()
+    if connected:
+        # In order to get a final response from STT we send a stop, this
+        # will force a final=True return message.
+        data = {"action": "stop"}
+        ws.send(json.dumps(data).encode('utf8'))
+        # ... which we need to wait for before we shutdown the websocket
+        time.sleep(1)
+        ws.close()
 
     # ... and kill the audio device
     p.terminate()
 
 
-def on_message(self, msg):
+def on_message(ws, msg):
     """Print whatever messages come in.
 
     While we are processing any non trivial stream of speech Watson
@@ -123,13 +135,13 @@ def on_message(self, msg):
         # This prints out the current fragment that we are working on
         print(data['results'][0]['alternatives'][0]['transcript'])
 
-        global LAST_ACTIVE_TIME
-        LAST_ACTIVE_TIME = time.time()
+    if "error" in data.keys():
+        print(data["error"])
 
 
-def on_error(self, error):
+def on_error(ws, error):
     """Print any errors."""
-    print(error)
+    print("got an error: ", error)
 
 
 def on_close(ws):
@@ -153,12 +165,13 @@ def on_open(ws):
         "content-type": "audio/l16;rate=%d" % RATE,
         "continuous": True,
         "interim_results": True,
-        # "inactivity_timeout": 5, # in order to use this effectively
+        "inactivity_timeout": 2,  # in order to use this effectively
         # you need other tests to handle what happens if the socket is
         # closed by the server.
         "word_confidence": True,
         "timestamps": True,
-        "max_alternatives": 3
+        "max_alternatives": 3,
+        "background_audio_suppression": 0.2
     }
 
     # Send the initial control message which sets expectations for the
@@ -189,8 +202,8 @@ def get_auth():
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='Transcribe Watson text in real time')
-    parser.add_argument('-t', '--timeout', type=int, default=60)
+        description='Transcribe text in real time')
+    parser.add_argument('-t', '--timeout', type=int, default=30)
     # parser.add_argument('-d', '--device')
     # parser.add_argument('-v', '--verbose', action='store_true')
     args = parser.parse_args()
@@ -216,11 +229,9 @@ def microphone_stt():
     # console.
     #
     # websocket.enableTrace(True)
-    global LAST_ACTIVE_TIME
     global FINALS
     if FINALS:
         FINALS = []
-    LAST_ACTIVE_TIME = time.time()
     ws = websocket.WebSocketApp(url,
                                 header=headers,
                                 on_message=on_message,
@@ -243,4 +254,3 @@ if __name__ == "__main__":
         print("Text: {}".format(text))
     else:
         print("No audio")
-
