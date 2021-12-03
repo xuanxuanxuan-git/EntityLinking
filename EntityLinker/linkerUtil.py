@@ -23,5 +23,5 @@ TEST_DEP_FILE_PATH = "../Data/Generated_dataset/lstm_dataset/dep_test.txt"
 EXTRA_TRAIN_DATA = 'Generated_dataset/extra_training_set.txt'
 
 # ------------------------ entity linker model path ------------------- #
-MODEL_PATH = 'entity_model_old.pth'
+MODEL_PATH = 'entity_model.pth'
 
