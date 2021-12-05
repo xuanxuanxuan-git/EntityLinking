@@ -12,23 +12,30 @@ import torch
 import os
 import sys
 import math
+import time
 import pandas as pd
+from urllib3.exceptions import NewConnectionError
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence, pad_packed_sequence
 from receiver import *
 
-SPEECH_RECOGNITION_PATH = 'C:/Users/62572/Desktop/COMP90055/IntentClassifier/speechToText'
+SPEECH_RECOGNITION_PATH = 'C:/Users/62572/Desktop/COMP90055/IntentClassifier/speechToText/wake_word'
 PARENT_FOLDER_PATH = 'C:/Users/62572/Desktop/COMP90055/IntentClassifier/EntityLinker'
 INTENT_CLASSIFICATION = 'C:/Users/62572/Desktop/COMP90055/IntentClassifier/IntentClassification/rasa_custom'
+REACHY_PATH = 'C:/Users/62572/Desktop/COMP90055/IntentClassifier/reachy'
+INTENT_INPUT_FILE = 'C:/Users/62572/Desktop/COMP90055/IntentClassifier/IntentClassification/rasa_custom/intent_input.txt'
+INTENT_OUTPUT_FILE = 'C:/Users/62572/Desktop/COMP90055/IntentClassifier/IntentClassification/rasa_custom/intent_output.txt'
 
 sys.path.append(SPEECH_RECOGNITION_PATH)
 sys.path.append(PARENT_FOLDER_PATH)
 sys.path.append(INTENT_CLASSIFICATION)
+sys.path.append(REACHY_PATH)
 
-from stream_recognition import *
+from wake_word_engine import *
 from linkerUtil import MODEL_PATH, TRAIN_DEP_FILE_PATH, DEV_DEP_FILE_PATH, TEST_DEP_FILE_PATH
-from rasa_single_instance_tester import *
+from reachy_start import *
+from intent_to_reachy import *
 
 # --------------------------- Global parameters ------------------------------- #
 
@@ -43,6 +50,11 @@ embedding_dim = 300
 # parameters used in EntityLinker model
 feature_dimension = depset_size + embedding_dim
 hidden_dimension = 50
+
+# parameters related to the camera setup
+DIRECTION = "opposite"              # "right", "left", "same"
+TRANSLATION = [0.77, -0.1, 0.15]    # [dx, dy, dz]
+THETA = 30                          # [0, 90]
 
 
 # preprocess dependency parsing relations using one-hot encoding
@@ -227,7 +239,7 @@ def command_to_entities(sentence):
 def find_most_similar_visual_item(nlp, entity_list, textual_entity_name):
     textual_entity = nlp(textual_entity_name)
     max_sim = 0.5
-    max_coco = None
+    max_coco = ''
 
     for item in entity_list:
         if item == "diningtable":
@@ -250,7 +262,6 @@ def find_most_similar_visual_item(nlp, entity_list, textual_entity_name):
 
 # ------------------------------ for Intent classification -----------------------#
 
-
 def get_dot_product(x, y):
     return round(np.dot(x, y) / (np.sqrt(np.dot(x, x)) * np.sqrt(np.dot(y, y))), 4)
 
@@ -272,22 +283,64 @@ def get_dot_product_score(agent_pos, object_pos, agent_face_direction):
 
 
 # Calculate the distance between the target entity and the receptacle entity
-def calculate_distance(target, recep):
-    (x1, y1, z1) = target["position"]
-    (x2, y2, z2) = recep["position"]
+def calculate_distance(visual_info, target, recep):
+    (x1, y1, z1) = (0, 0, 0)
+    (x2, y2, z2) = (0, 0, 0)
+    distance_1 = -1
+    distance_2 = -1
+    distance_3 = -1
 
-    distance_1 = round(math.sqrt(x1 ** 2 + y1 ** 2 + z1 ** 2), 2)
-    distance_2 = round(math.sqrt(x2 ** 2 + y2 ** 2 + z2 ** 2), 2)
-    distance_3 = round(math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2 + (z2 - z1) ** 2), 2)
+    if target:
+        (x1, y1, z1) = target["position"]
+        for entity in visual_info:
+            if entity["name"] == target["name"]:
+                z1 = entity["position"][2]
+                break
+        distance_1 = round(math.sqrt(x1 ** 2 + y1 ** 2 + z1 ** 2), 2)
+
+    if recep:
+        (x2, y2, z2) = recep["position"]
+        for entity in visual_info:
+            if entity["name"] == recep["name"]:
+                z2 = entity["position"][2]
+                break
+        distance_2 = round(math.sqrt(x2 ** 2 + y2 ** 2 + z2 ** 2), 2)
+
+    if target and recep:
+        distance_3 = round(math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2 + (z2 - z1) ** 2), 2)
 
     angle = get_dot_product_score([0, 0, 0], [x1, y1, z1], 0)
 
     return str(distance_1) + ' ' + str(distance_2) + ' ' + str(distance_3) + ' ' + str(angle)
 
 
-# -------------------------- entity recognition and linking ------------------- #
-from urllib3.exceptions import NewConnectionError
+# write the command to a file
+# The intent classifier will read the command in the file and perform intent prediction
+def write_to_file(file_path, content):
+    f = open(file_path, "w")
+    f.write(content)
+    f.close()
 
+
+# read the intent prediction result from the file
+# The prediction result is produced from the intent classifier (running in a separate environment)
+def read_intent_prediction(file_path):
+    intent_prediction = ''
+    while True:
+        if os.path.isfile(file_path):
+            f = open(file_path, "r")
+            intent_prediction = f.read()
+            print("Predicted intent: {}\n".format(intent_prediction))
+            f.close()
+            os.remove(file_path)
+            break
+        else:
+            # print("not found")
+            time.sleep(0.1)
+    return intent_prediction
+
+
+# -------------------------- perform the entire process --------------------------- #
 if __name__ == '__main__':
     # load the saved model and the spacy's language model
     model_load = EntityLinker(feature_dim=feature_dimension,
@@ -303,46 +356,69 @@ if __name__ == '__main__':
             # ------------- entity recognition ------------------------ #
             if mode == '1':
                 sentence = input("Enter a command: ")
-                target, receptacle = command_to_entities(sentence)
 
             elif mode == '2':
                 audio_input = microphone_stt()
                 sentence = audio_input
                 if not audio_input:
-                    sys.exit(0)
+                    raise Exception("No audio input")
                 print("Audio input: ", audio_input)
 
-                target, receptacle = command_to_entities(sentence)
             else:
+                print("raise error")
                 raise KeyError
+            target, receptacle = command_to_entities(sentence)
 
             try:
                 # ------------- match with visual pipeline ------------------------ #
 
                 # get visual info from the visual pipeline
                 visual_info = receive_from_zed()
-                if not visual_info:  # if no objects detected
+
+                if visual_info:
+                    transformed_visual_info = coordinate_transformation(visual_info, DIRECTION, THETA, TRANSLATION)
+                    visual_entity_list = [item["name"] for item in visual_info]
+                    print("Entities detected by the visual pipeline: ", visual_entity_list)
+
+                    target_coord = None
+                    recep_coord = None
+                    visual_target_entity = None
+                    visual_recep_entity = None
+
+                    # if there is a target in the command
+                    if target:
+                        visual_target_name = find_most_similar_visual_item(nlp, visual_entity_list, target[0])
+                        for item in transformed_visual_info:
+                            if item["name"].replace(' ', '') == visual_target_name.replace(' ', ''):
+                                visual_target_entity = item
+                                target_coord = item["position"]
+                                break
+                    if receptacle:
+                        visual_recep_name = find_most_similar_visual_item(nlp, visual_entity_list, receptacle[0])
+                        for item in transformed_visual_info:
+                            if item["name"].replace(' ', '') == visual_recep_name.replace(' ', ''):
+                                visual_recep_entity = item
+                                recep_coord = item["position"]
+                                break
+
+                else:   # if no objects detected
                     raise ValueError
 
-                visual_entity_list = [item["name"] for item in visual_info]
-                print("Entities detected by the visual pipeline: ", visual_entity_list)
+                # ------------- pass the visual info to intent classifier ---------- #
+                message = sentence
+                if visual_info:
+                    message = sentence + ' @@@@@@ ' + calculate_distance(visual_info, visual_target_entity,
+                                                                         visual_recep_entity)
 
-                if target:
-                    visual_target_name = find_most_similar_visual_item(nlp, visual_entity_list, target[0])
-                    for item in visual_info:
-                        if item["name"].replace(' ', '') == visual_target_name.replace(' ', ''):
-                            visual_target_entity = item
-                if receptacle:
-                    visual_recep_name = find_most_similar_visual_item(nlp, visual_entity_list, receptacle[0])
-                    for item in visual_info:
-                        if item["name"].replace(' ', '') == visual_recep_name.replace(' ', ''):
-                            visual_recep_entity = item
+                print("Input to the intent classifier: {}\n".format(message))
+                write_to_file(INTENT_INPUT_FILE, message)
+                intent = read_intent_prediction(INTENT_OUTPUT_FILE)
 
-                # ------------- pass the visual info to intent classifier ----------#
-                message = sentence + ' @@@@@@ ' + calculate_distance(visual_target_entity, visual_recep_entity)
-                print("Input to the intent classifier: ", message)
+                #  ----------- connect to reachy and perform the task ------------- #
                 try:
-                    post_to_rasa(message)
+                    reachy_robot = connect_to_robot(ROBOT_IP)
+                    execute_reachy(reachy_robot, intent, target_coord, recep_coord)
+
                 except Exception:
                     raise ConnectionError
 
@@ -351,12 +427,14 @@ if __name__ == '__main__':
             except (ValueError, AttributeError):
                 print("Objects not detected by the visual pipeline")
             except ConnectionError:
-                print("Failed to connect to the intent classifier")
-
+                print("Failed to connect to Reachy")
 
         except KeyError:
             print("Mode not supported")
-            sys.exit()
         except KeyboardInterrupt:
             print("\nQuit!")
-            sys.exit()
+            if os.path.isfile(INTENT_INPUT_FILE):
+                os.remove(INTENT_INPUT_FILE)
+        finally:
+            sys.exit(1)
+

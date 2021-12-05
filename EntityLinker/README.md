@@ -1,3 +1,141 @@
+## Run the entire pipeline
+
+1. Installation
+
+To run the entire pipeline, first you need to install necessary packages for relevant components. 
+Please make sure that you are using python version 3.6 or python version 3.7. It is recommended 
+that you use virtual environments to run the project to avoid potential conflicts.
+
+
+Requirements for speech recognition tools:
+```angular2html
+$ pip install pvporcupinedemo                (for wake word engine)
+$ pip install websocket-client==0.56.0       (for speech recognition)
+```
+
+Requirements for the entity linker:
+```angular2html
+$ pip3 install -U spacy
+$ python -m spacy download en_core_web_trf (this model is used for dependency parsing)
+$ python -m spacy download en_core_web_lg (this model is used to generate word vectors)
+
+$ pip3 install pandas
+
+To check if pyTorch is installed:
+$ pip3 show torch
+
+If pytorch is not installed:
+$ pip3 install torch 
+```
+
+
+Requirements for the intent classification:
+```angular2html
+Please note that we use a separate virtual environment to run the intent classifier. The reasons 
+are described in the onenote (RA week 3 -> known issues -> point 5).
+
+$ python3.7 -m venv ./venv                    (make sure you do this inside the IntentClassification folder)
+$ source ./venv/bin/activate
+$ pip install -U pip
+$ pip install rasa==1.10.12
+ OR
+$ pip3 install rasa==1.10.12
+$ pip3 install rasa[full]==1.10.12            (run this to make sure you install all dependencies)
+
+Dependencies for Spacy
+
+$ pip3 install rasa[spacy]==1.10.12
+$ python3 -m spacy download en_core_web_lg
+$ python3 -m spacy link en_core_web_lg en
+```
+
+Requirements for Reachy's execution
+```angular2html
+$ pip install reachy-sdk
+$ pip install scripy
+```
+
+Requirements for the visual pipeline
+```angular2html
+We run the visual pipeline in the GPU. Please refer to the OneNote (RA week 3 -> Run the entire 
+pipeline step by step) to see how to connect the GPU and start the visual pipeline.
+```
+
+2. Create the wake word engine model
+
+```angular2html
+Please read through the readme.md file in speechToText folder for creating the wake word model.
+Please put the model in speechToText/wake_word/hey_reachy_{os} folder.
+```
+
+3. Change folder paths
+
+a) In <code>LSTM_model/entity_recognition.py</code>
+
+```angular2html
+Replace the SPEECH_RECOGNITION_PATH, PARENT_FOLDER_PATH, INTENT_CLASSIFICATION, REACHY_PATH,
+INTENT_INPUT_FILE, INTENT_OUTPUT_FILE variables with the paths in your system accordingly.
+```
+
+b) In <code>speechToText/wake_word/wake_word_engine.py</code>
+```angular2html
+Replace the KEYWORD_PATH variable with the path to the wake word model in your system.
+```
+
+c) In <code>IntentClassification/rasa_custom/rasa_single_instance_tester.py</code>
+```angular2html
+Replace rootpath, intent_input_path, intent_prediction_path variables accordingly.
+```
+
+4. Fill in the camera setup information
+```angular2html
+In line 55-57 in entity_recognition.py, fill in the direction of the camera, the translation 
+vector, as well as the angle of the camera. Please refer to the onenote (RA week 3 -> 
+coordinate transformation) for more information about the calculation.
+```
+
+5. Start the intent classifier
+```angular2html
+Open a new terminal, activate the virtual environment for the intent classifier. 
+
+Run the following commands:
+$ Export PYTHONPATH={path/to/rasa_custom}/:PYTHONPATH
+$ Export PYTHONPATH={path/to/IntentClassification}/:PYTHONPATH
+$ cd {path/to/IntentClassification}
+$ rasa run --enable-api -m models/20201123-111915.tar.gz
+
+Open another new terminal, activate the virtual environment again and export relevant paths.
+Then run the following commands:
+$ cd {path/to/rasa_custom}
+$ python rasa_single_instance_tester.py
+```
+
+6. Start the robot
+```angular2html
+Please refer to the OneNote (RA week 3 -> Run the entire pipeline step by step) to see 
+how to connect and start the robot.
+```
+
+7.Start the entire pipeline
+```angular2html
+The entire pipeline is started by executing the main function in the LSTM_model/entity_recognition.py.
+You need to run the following commands:
+
+$ cd {path/to/LSTM_model}
+$ python entity_recognition.py
+
+Then it will be prompted to enter the mode:
+Enter 1 to type the command, enter 2 to start wake word detection and then give a verbal command.
+Enter 'Ctrl+C' to quit.
+
+You need to re-start the rasa_single_instance_tester.py (in step 5) everytime you re-run 
+the pipeline.
+```
+
+
+
+<br><hr>
+
 ## Entity recognition - LSTM model
 The LSTM model is responsible for entity recognition. 
 The trained LSTM model can be found in the LSTM_model folder. 
@@ -65,18 +203,12 @@ the model, copy the model and place it into the folder titled 'EntityLinker/LSTM
 ## Run the entity recognition, entity linking, and intent classification
 
 ### Run the entity recognition (LSTM model)
-Step 0: change the paths
-1. change SPEECH_RECOGNITION_PATH to your own path to the folder <i>speechToText</i>.
-2. change PARENT_FOLDER_PATH to your own path to the folder <i>EntityLinker</i>.
-3. change INTENT_CLASSIFICATION to your own path to the folder <i>IntentClassification/rasa_custom</i>.
-4. make sure that the trained LSTM model is placed in the folder <i>LSTM_model</i>, and is titled as <i>entity_model.pth</i>.
 
 Step 1: perform the entity recognition
 ```angular2html
     
     $ cd LSTM_model
     $ python entity_recognition.py
-    Enter 1 to type a command.
     
     
     To test the LSTM model, enter the following sentences
@@ -110,44 +242,4 @@ Step 1: perform the entity recognition
     
     To exit the inference: enter Ctrl+C, then press enter
 
-```
-
-### Enable the speech recognition service
-
-Step 0.1: install additional packages
-```angular2html
-    $ pip3 install pyaudio
-    $ pip3 install websocket-client==0.56.0
-```
-
-Step 0.2: create a file named <code>speech.cfg</code> in the folder <i>speechToText</i>, copy the information from 
-<i>speech.cfg.example</i> to this file. Replace the <i>apikey</i> and <i>instance_id</i>
-with the authentication details provided in the last section of the handover report.
-
-Step 1: issue a verbal command
-```angular2html
-    $ python entity_recognition.py
-    Enter 2, wait for the instruction '* please speak', and then give a verbal command.
-```
-
-### Run the visual and textual entity linking
-
-Step 0.1: turn on the visual pipeline. Change the receiver's ip address to the current device.
-
-Step 0.2: install all the packages needed for the intent classification. And do the following commands.
-
-```angular2html
-    In the IntentClassification/rasa_custom/rasa_single_instance_tester.py, change the 
-    rootpath to your own path to the folder IntentClassification.
-
-    Then start the RASA server in a separate terminal and run the following command:
-    $ rasa run --enable-api -m models/20201123-111915.tar.gz
-```
-
-Step 1: issue a command and perform the intent classification
-```angular2html
-    $ python entity_recognition.py
-    Enter 1 or 2, then enter a command. The terminal will display the recognised target and receptacle 
-    using the LSTM model, the visual mentions of same entities, and the predicted intents
-    from the multi-modal intent classifier.
 ```
