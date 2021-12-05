@@ -1,5 +1,5 @@
 [auth]
-# please refer to the last section of the handover report for authentication info
+# please refer to the second last section of the handover report for credential info
 apikey = replace-with-the-IBM-key
 
 instance_id = replace-with-instance-id

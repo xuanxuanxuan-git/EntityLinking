@@ -55,7 +55,7 @@ FREQ = 400      # in Hz
 rootpath = '../../'
 config_file = os.path.join(rootpath, 'speechToText/speech.cfg')
 # config_file = '../../speech.cfg'
-KEYWORD_PATH = 'C:/Users/62572/Desktop/COMP90055/IntentClassifier/speechToText/wake_word/hey_reachy_windows/hey-reachy__en_windows_2021-12-16-utc_v1_9_0.ppn'
+KEYWORD_PATH = os.path.join(rootpath, 'speechToText/wake_word/hey_reachy_windows/hey-reachy__en_windows_2021-12-16-utc_v1_9_0.ppn')
 
 
 class PorcupineDemo(threading.Thread):
