@@ -66,3 +66,9 @@ the positional information from the visual pipeline (after coordinate transforma
 a sequence of actions to be performed by Reachy.
 
 
+<hr>
+
+## Run the entire pipeline
+
+The main function to start the entire pipeline can be found in <code>EntityLinker/LSTM_model/entity_recognition.py</code>.
+To run the program, please follow the instruction in <code>EntityLinker/README.md</code>.
