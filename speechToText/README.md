@@ -24,7 +24,10 @@ $ pip install pvporcupinedemo
 <b>IBM Watson speech recognition installation</b>
 ```angular2html
 $ pip install websocket-client==0.56.0
-$ pip install pyaudio
+
+You don't need to install pyaudio in this program since we use pv_recorder (included in the 
+pvporcupinedemo package) as the audio source. If you would like to run the speech recognition 
+tool alone, please follow the instructions for stream_recognition.py.
 ```
 
 <b>Short beep sound notification</b>
@@ -72,18 +75,32 @@ $ python wake_word_engine.py [--output_path] [--audio_device_index] [--show_audi
 
 <br><hr>
 2. <code>stream_recognition.py</code>
+
 This files contains codes that uses IBM Watson speech recognition service only. You will also 
 need to provide credentials.
 
 ```angular2html
 To use the IBM speech recognition API, first install websocket-client and pyAudio
 $ pip install websocket-client==0.56.0
+
+a) Installing pyAudio on Windows
+$ pip install pipwin
+$ pipwin install pyaudio
+
+b) Installing pyAudio on Mac OS with homebrew
+$ brew install portaudio
 $ pip install pyaudio
 
+c) Installing pyAudio on linux
+$ pip install pyaudio
+```
+
 To run a live speech recognition
+```angular2html
 $ python stream_recognition.py 
 optional argument:
 $ python stream_recognition.py [-t timeout]
-The program will be active for a period, and print out transcripts in real time. The default timeout period is 60 seconds.
 ```
+The program will be active for a period, 
+and print out transcripts in real time. The default timeout period is 60 seconds.
 
