@@ -88,13 +88,15 @@ Nothing is hard-coded.
 
 | Command Type | Transcription* |  Video   |
 | ----------- | ----------- | --------|
-| Pickup and putdown    | Pick up the phone and put it on the table.  | |
-| Pickup only   | Pick up the phone.       | |
-| Pickup and putdown (receptacle is not detected)| Pick up the phone and put it on the chair. | |
-| Pickup and putdown (when the receptacle is not reachable by the arm)| Pick up the phone and put it on the book/chair| |
-| Pickup only / pickup and putdown (when the target is not reachable by the arm)| Pick up the phone and put it on the book | |
+| Pickup and putdown    | Pick up the phone and put it on the table.  | https://user-images.githubusercontent.com/69493917/156305880-67497477-aa54-4f55-bfba-9980463fa254.mp4 |
+| Pickup only   | Pick up the phone. | https://user-images.githubusercontent.com/69493917/156306112-0f1a16a9-b630-4837-9ae1-664bc16703c9.mp4 |
+| Pickup and putdown (receptacle is not detected)| Pick up the phone and put it on the chair. |https://user-images.githubusercontent.com/69493917/156306365-5b110edc-1b8e-4a00-b56c-561ecb867d6d.mp4|
+| Pickup and putdown (when the receptacle is not reachable by the arm)| Pick up the phone and put it on the book/chair| https://user-images.githubusercontent.com/69493917/156306780-4c08711e-712b-410b-981a-9041dfadcb11.mp4|
+| Pickup only / pickup and putdown (when the target is not reachable by the arm)| Pick up the phone and put it on the book |https://user-images.githubusercontent.com/69493917/156306820-f883e49f-a4c9-4a3d-8e59-749319b20b4a.mp4|
 
-######* Voice commands can be of any syntactic structures. For simplicity, we stick with similar commands in these experiments.
+\* Voice commands can be of any syntactic structures. For simplicity, we stick with similar commands in these experiments.
 
 #### Explaining the wake word engine
+
+https://user-images.githubusercontent.com/69493917/156306229-2eb6a4a6-8390-457a-9c31-1cda135b1f62.mp4
 
