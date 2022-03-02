@@ -72,3 +72,29 @@ a sequence of actions to be performed by Reachy.
 
 The main function to start the entire pipeline can be found in <code>EntityLinker/LSTM_model/entity_recognition.py</code>.
 To run the program, please follow the instruction in <code>EntityLinker/README.md</code>.
+
+<hr>
+
+## Demos
+
+Here are some videos showing real time control of the Reachy robot using voice commands. 
+Users interact with the robot by giving a verbal command, then the robot will perform reaching and/or 
+grasping actions accordingly. Items are placed at random locations on the table. The robot is 
+able to recognise objects of interest, user intents, and positions of the objects, all by itself. 
+Note that due to the engine problems, the robot is not able to pick up an actual object. 
+So we assume that the robot has grasped the object once it reached to the location and open its grid. 
+Nothing is hard-coded.
+
+
+| Command Type | Transcription* |  Video   |
+| ----------- | ----------- | --------|
+| Pickup and putdown    | Pick up the phone and put it on the table.  | |
+| Pickup only   | Pick up the phone.       | |
+| Pickup and putdown (receptacle is not detected)| Pick up the phone and put it on the chair. | |
+| Pickup and putdown (when the receptacle is not reachable by the arm)| Pick up the phone and put it on the book/chair| |
+| Pickup only / pickup and putdown (when the target is not reachable by the arm)| Pick up the phone and put it on the book | |
+
+######* Voice commands can be of any syntactic structures. For simplicity, we stick with similar commands in these experiments.
+
+#### Explaining the wake word engine
+
